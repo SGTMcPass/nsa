@@ -54,7 +54,7 @@
 
 ## 🧠 Memory Summary Format
 
-```markdown
+
 ### 🧠 Session Summary [Persistent Memory Format]
 
 **Topic:** <Session title>  
@@ -74,7 +74,6 @@
 - Bullet of next tasks
 
 **Tags:** #trick #cpp #simulation #gnc
-```
 
 ---
 
