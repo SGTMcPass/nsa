@@ -17,13 +17,14 @@ To assist with:
 ---
 
 ## 📁 File Structure
-
-nasa-simulation-assistant/
-├── README.md - Documentation and usage
-├── VERSION - Version info
-├── config/
-│ ├── nasa_simulation_prompt_assistant.yaml
-│ ├── nasa_simulation_prompt_assistant.json
-├── formats/
-│ ├── nasa_simulation_prompt_assistant.md
-│ ├── nasa_simulation_prompt_assistant.txt
+```bash
+nasa-simulation-assistants/
+├── config
+│   ├── nasa_simulation_prompt_assistant.json
+│   └── nasa_simulation_prompt_assistant.yaml
+├── formats
+│   ├── nasa_simulation_prompt_assistant.md
+│   └── nasa_simulation_prompt_assistant.txt
+├── README.md
+└── VERSION
+```
