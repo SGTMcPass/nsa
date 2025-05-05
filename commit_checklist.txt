@@ -1,0 +1,31 @@
+# ✅ NASA Simulation Assistant – Commit Checklist (v1.0.0)
+
+🧠 Assistant Profile
+[ ] profiles/prompt/nasa_simulation_prompt_assistant.json includes "name", "version", and is schema-valid
+[ ] Converted .yaml and .md versions are up to date
+[ ] Schema used: assistant_profile.schema.v1.0.0.json
+
+📚 Prompt Registry
+[ ] All entries in prompt_registry.yaml reference existing files
+[ ] output_files or output_pattern declared per prompt
+[ ] notes field describes intent
+[ ] All prompt versions set (e.g., 0.1, 1.0)
+
+🛠 Tooling
+[ ] tools/load_prompt.py updated and working
+[ ] tools/lint_prompts.py passes with zero errors
+[ ] tools/convert_prompt_profile.py tested on JSON and YAML
+
+🚀 CI
+[ ] .gitlab-ci.yml passes
+[ ] Makefile targets run correctly (make lint, convert, list, export)
+
+📂 Repo Structure
+[ ] README.md updated
+[ ] .gitignore clean and accurate
+[ ] scripts/bootstrap.sh runs without error
+
+🔖 Final Steps
+[ ] All placeholder prompts scaffolded
+[ ] All changes committed
+[ ] Run ./tag-and-release.sh
