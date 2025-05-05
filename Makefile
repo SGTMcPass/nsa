@@ -22,9 +22,11 @@ convert:
 lint:
 	echo "🔎 Linting JSON MD and YAML prompt files..."
 	@python3 tools/lint_prompts.py
+validate-prompts:
+	@echo "🔎 Validating prompt structure and metadata..."
+	@python3 tools/validate_prompt_files.py
 help:
 	@echo "🛠️  Available Makefile targets:"
 	@echo "  make list         - List all registered prompts"
 	@echo "  make validate     - Check that all registry file paths exist"
 	@echo "  make export ID=xxx FILE=output.md - Export prompt content to file"
-

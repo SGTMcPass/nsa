@@ -1,6 +1,8 @@
 # 🚀 NASA Simulation Prompt Assistant
 
-A structured prompt engineering workspace for building, testing, and managing reusable AI prompts in aerospace simulation, control systems, GNC, and infrastructure toolchains.
+A structured prompt engineering workspace for building, testing, and managing
+reusable AI prompts in aerospace simulation, control systems, GNC, and
+infrastructure toolchains.
 
 ---
 
@@ -30,10 +32,12 @@ nasa-simulation-assistants/
 ## 🧠 Assistant Profile
 
 Defined in:
+
 - `profiles/prompt/nasa_simulation_prompt_assistant.json`
 - Exported to `.yaml` and `.md`
 
 Validated against:
+
 - `schemas/assistant_profile.schema.v1.0.0.json`
 
 ---
@@ -132,4 +136,3 @@ To install dependencies and validate everything locally:
 
 - Schema version: `v1.0.0`
 - Assistant profile versioning tracked in `prompt_registry.yaml`
-

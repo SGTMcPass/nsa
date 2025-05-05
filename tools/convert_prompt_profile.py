@@ -2,12 +2,18 @@
 """
 convert_prompt_profile.py — Convert assistant profile between JSON, YAML, and Markdown formats.
 """
+import sys
+from pathlib import Path
 
+# ✅ Allow relative imports when run as script
+if __name__ == "__main__" and __package__ is None:
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+import textwrap
 import json
 import yaml
 import argparse
-from pathlib import Path
-import textwrap
+
 
 def load_profile(path: Path):
     if path.suffix == ".json":
@@ -17,15 +23,18 @@ def load_profile(path: Path):
     else:
         raise ValueError(f"Unsupported input format: {path.suffix}")
 
+
 def save_yaml(data, out_path):
     with open(out_path, "w") as f:
         yaml.dump(data, f, sort_keys=False)
     print(f"[✅] YAML saved to: {out_path}")
 
+
 def save_json(data, out_path):
     with open(out_path, "w") as f:
         json.dump(data, f, indent=2)
     print(f"[✅] JSON saved to: {out_path}")
+
 
 def save_markdown(data, out_path, source_name):
     md = f"# NASA Simulation Assistant Profile\n\n> Converted from `{source_name}`\n"
@@ -91,8 +100,11 @@ def save_markdown(data, out_path, source_name):
     Path(out_path).write_text(md)
     print(f"[✅] Markdown saved to: {out_path}")
 
+
 def main():
-    parser = argparse.ArgumentParser(description="Convert assistant profile between JSON, YAML, and Markdown")
+    parser = argparse.ArgumentParser(
+        description="Convert assistant profile between JSON, YAML, and Markdown"
+    )
     parser.add_argument("input_file", help="Input JSON or YAML file")
     parser.add_argument("--json", help="Output JSON file (if input is YAML)")
     parser.add_argument("--yaml", help="Output YAML file (if input is JSON)")
@@ -117,8 +129,10 @@ def main():
     elif input_format == "yaml":
         save_json(data, Path(args.json) if args.json else default_json)
 
-    save_markdown(data, Path(args.markdown) if args.markdown else default_md, input_path.name)
+    save_markdown(
+        data, Path(args.markdown) if args.markdown else default_md, input_path.name
+    )
+
 
 if __name__ == "__main__":
     main()
-

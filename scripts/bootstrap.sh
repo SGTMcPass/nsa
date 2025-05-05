@@ -35,4 +35,3 @@ python tools/load_prompt.py --validate
 
 echo ""
 echo "✅ Bootstrap complete. Local environment is ready."
-

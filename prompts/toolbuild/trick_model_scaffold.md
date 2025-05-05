@@ -1,7 +1,11 @@
-# Trick Model Scaffolding Prompt  
-**Purpose:** Generate reusable C++ simulation modules compatible with NASA Trick based on structured YAML or JSON input.  
-**Tag:** #toolbuild #trick #codegen  
-**Version:** 0.1  
+# Trick Model Scaffolding Prompt
+
+**Purpose:** Generate reusable C++ simulation modules compatible with NASA Trick
+based on structured YAML or JSON input.
+**ID:** trick_model_scaffold
+**Tag:** toolbuild, trick, codegen
+**Domain:** simulation, GNC
+**Version:** 0.1
 **Status:** draft
 
 ---
@@ -18,7 +22,7 @@ Ensure all code is modular and complies with Trick conventions.
 
 ---
 
-## 📥 Example Input (YAML)
+## 📥 Example Input
 
 ```yaml
 name: ThrusterModule
@@ -27,18 +31,22 @@ components:
   - name: Thruster1
     location: [0.0, 0.0, 1.0]
     force: 150.0
+```
 
-## 📤 Output Files
+---
+
+## 📤 Output Expectation
 
 ```plaintext
 - ThrusterModule.hh
 - ThrusterModule.cpp
 - CMakeLists.txt
+```
 
-```markdown
-🔧 Notes
+---
+
+## 📝 Notes
+
 - Extend with controller and sensor templates in future versions
-
 - Ensure compatibility with GitLab CI by including basic unit test stubs
-
 - Consider supporting YAML → TrickDataRecord auto-mapping later

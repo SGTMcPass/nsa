@@ -18,4 +18,3 @@ git tag -a $VERSION -m "Release $VERSION: Initial prompt assistant milestone"
 git push origin $VERSION
 
 echo "✅ Tagged and pushed as $VERSION"
-

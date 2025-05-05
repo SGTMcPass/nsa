@@ -1,0 +1,13 @@
+# === Core project tools ===
+PyYAML>=6.0
+jsonschema>=4.17.0
+
+# === Pre-commit framework ===
+pre-commit>=3.4.0
+
+# === Linting / formatting (optional tools) ===
+black==22.3.0  # Safe for Python 3.6; use 24.x if on 3.8+
+yamllint>=1.33.0
+
+# === Optional enhancement (e.g. rich output, argparse help) ===
+rich>=13.0.0

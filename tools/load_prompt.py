@@ -3,16 +3,23 @@
 load_prompt.py — CLI tool to query, list, validate, and export prompts from prompt_registry.yaml
 """
 
-import yaml
+from pathlib import Path
+import sys
+
+# ✅ Allow relative imports when run as script
+if __name__ == "__main__" and __package__ is None:
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+# (your actual imports follow here)
 import argparse
+import yaml
 import json
 from pathlib import Path
-import textwrap
-import sys
 
 # Constants
 REGISTRY_PATH = Path(__file__).parent.parent / "prompt_registry.yaml"
 ROOT = Path(__file__).parent.parent
+
 
 def load_registry():
     if not REGISTRY_PATH.exists():
@@ -21,6 +28,7 @@ def load_registry():
     with open(REGISTRY_PATH, "r") as f:
         data = yaml.safe_load(f)
     return data.get("registry", [])
+
 
 def list_prompts(registry):
     print("📘 Registered Prompts:\n")
@@ -31,6 +39,7 @@ def list_prompts(registry):
         print(f"  Tags: {', '.join(entry.get('tags', []))}")
         print(f"  Version: {entry.get('version', 'N/A')}")
         print()
+
 
 def query_prompt(registry, query_id=None, tag=None, domain=None):
     results = []
@@ -44,6 +53,7 @@ def query_prompt(registry, query_id=None, tag=None, domain=None):
             results.append(entry)
 
     return results
+
 
 def display_prompt(entry, format_json=False):
     if format_json:
@@ -63,6 +73,7 @@ def display_prompt(entry, format_json=False):
     else:
         print(f"[WARNING] Prompt file not found: {prompt_file}")
 
+
 def export_prompt(entry, export_path):
     prompt_file = ROOT / entry["file"]
     export_path = Path(export_path)
@@ -71,6 +82,7 @@ def export_prompt(entry, export_path):
         return
     export_path.write_text(prompt_file.read_text())
     print(f"[✅] Exported to {export_path}")
+
 
 def validate_registry(registry):
     print("🔍 Validating prompt registry file paths...")
@@ -87,16 +99,23 @@ def validate_registry(registry):
     else:
         sys.exit(1)
 
+
 def main():
     parser = argparse.ArgumentParser(description="Prompt Registry CLI Tool")
     group = parser.add_mutually_exclusive_group()
-    group.add_argument("--list", action="store_true", help="List all registered prompts")
+    group.add_argument(
+        "--list", action="store_true", help="List all registered prompts"
+    )
     group.add_argument("--id", help="Query a prompt by ID")
     group.add_argument("--tag", help="Query prompts by tag")
     group.add_argument("--domain", help="Query prompts by domain")
-    parser.add_argument("--export", help="Export prompt content to a file (only works with --id)")
+    parser.add_argument(
+        "--export", help="Export prompt content to a file (only works with --id)"
+    )
     parser.add_argument("--format", choices=["json"], help="Format metadata as JSON")
-    parser.add_argument("--validate", action="store_true", help="Validate that all files exist")
+    parser.add_argument(
+        "--validate", action="store_true", help="Validate that all files exist"
+    )
 
     args = parser.parse_args()
     registry = load_registry()
@@ -118,6 +137,6 @@ def main():
     else:
         parser.print_help()
 
+
 if __name__ == "__main__":
     main()
-
