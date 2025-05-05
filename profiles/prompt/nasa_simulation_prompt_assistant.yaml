@@ -94,3 +94,7 @@ output_pattern: markdown
 output_files:
   - README.md
   - prompt.md
+notes: >
+  Output format defaults to Markdown unless otherwise specified.
+  All generated Markdown should follow linting standards to pass automated
+  checks.
