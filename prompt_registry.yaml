@@ -1,0 +1,72 @@
+registry:
+  - id: prompt_engineering_report
+    title: "Deep Research: Prompt Engineering in Aerospace Simulation"
+    file: prompts/deepdive/prompt_engineering_report.md
+    tags: [deepdive, promptengineering, simulation]
+    domain: [AI tools, GNC, Trick]
+    version: 1.0
+    input_format: none
+    output_format: markdown
+    output_files:
+      - prompt_engineering_report.md
+    notes: >
+      Generates a full technical report using chain-of-thought reasoning,
+      includes foundational + recent research (2020–2025),
+      and maps techniques to simulation workflows.
+
+  - id: assistant_profile_json
+    title: "NASA Simulation Assistant Profile (JSON)"
+    file: profiles/prompt/nasa_simulation_prompt_assistant.json
+    tags: [profile, assistant, metadata]
+    version: 1.0
+    input_format: none
+    output_format: json
+    notes: >
+      Machine-readable config for assistant personality, style, and prompt behavior.
+
+  - id: assistant_profile_md
+    title: "NASA Simulation Assistant Profile (Markdown)"
+    file: profiles/prompt/nasa_simulation_prompt_assistant.md
+    tags: [profile, assistant, readable]
+    version: 1.0
+    input_format: none
+    output_format: markdown
+    notes: >
+      Human-readable Markdown version of the assistant’s definition and behavior.
+
+  - id: session_summary_2025_05_04
+    title: "Session Summary: Prompt Engineering Deep Dive"
+    file: memory/prompts/session_2025-05-04.md
+    tags: [session, memory, deepdive]
+    version: 1.0
+    input_format: chat
+    output_format: markdown
+    notes: >
+      Captures assistant-user dialogue on prompt engineering integration, accuracy-first reasoning,
+      and assistant profile upgrade.
+
+# Placeholder entries for future prompts:
+  - id: trick_model_scaffold
+    title: "Toolbuilder: Trick Simulation Module Generator"
+    file: prompts/toolbuild/trick_model_scaffold.md
+    tags: [toolbuild, trick, codegen]
+    domain: [simulation]
+    version: 0.1
+    input_format: yaml
+    output_format: cpp
+    output_pattern: "{name}.hh, {name}.cpp"
+    output_files:
+      - CMakeLists.txt
+    notes: "Scaffold for future Trick-based prompt template"
+
+  - id: prompt_patterns_summary
+    title: "Overview: Prompt Patterns for Simulation Engineers"
+    file: prompts/overview/prompt_patterns_summary.md
+    tags: [overview, promptengineering]
+    version: 0.1
+    input_format: none
+    output_format: markdown
+    output_files:
+      - prompt_patterns_summary.md
+    notes: "Planned summary of prompt engineering design patterns"
+

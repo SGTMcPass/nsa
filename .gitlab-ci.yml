@@ -1,0 +1,59 @@
+stages:
+  - lint
+  - test
+
+default:
+  image: python:3.11
+  before_script:
+    - pip install --quiet jsonschema pyyaml
+
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - .cache/pip
+
+# --------------------------
+# LINTING
+# --------------------------
+
+lint:prompts:
+  stage: lint
+  script:
+    - echo "🔍 Linting prompt files..."
+    - python3 tools/lint_prompts.py
+  only:
+    changes:
+      - tools/lint_prompts.py
+      - schemas/**/*.json
+      - profiles/**/*.json
+      - profiles/**/*.yaml
+      - prompts/**/*.{json,yaml,md}
+      - prompt_registry.yaml
+
+# --------------------------
+# FUNCTIONAL TESTS
+# --------------------------
+
+test:prompt-conversion:
+  stage: test
+  script:
+    - echo "🧪 Testing JSON → YAML/Markdown conversion"
+    - python3 tools/convert_prompt_profile.py profiles/prompt/nasa_simulation_prompt_assistant.json --markdown /dev/null
+  only:
+    changes:
+      - tools/convert_prompt_profile.py
+      - profiles/prompt/nasa_simulation_prompt_assistant.json
+
+test:registry-validation:
+  stage: test
+  script:
+    - echo "📦 Validating prompt registry file paths..."
+    - python3 tools/load_prompt.py --validate
+  only:
+    changes:
+      - tools/load_prompt.py
+      - prompt_registry.yaml
+      - prompts/**/*.md
+      - profiles/**/*.json
+
+

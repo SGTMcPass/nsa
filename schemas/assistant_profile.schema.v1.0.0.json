@@ -1,0 +1,110 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://example.com/schemas/assistant_profile.schema.v1.0.0.json",
+  "title": "NASA Simulation Assistant Profile Schema",
+  "type": "object",
+  "required": ["name", "prompt_behavior"],
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "user_profile": {
+      "type": "object",
+      "properties": {
+        "role": { "type": "string" },
+        "background": { "type": "string" },
+        "languages": { "type": "array", "items": { "type": "string" } },
+        "tools": { "type": "array", "items": { "type": "string" } },
+        "formats": { "type": "array", "items": { "type": "string" } },
+        "platforms": { "type": "array", "items": { "type": "string" } },
+        "style": { "type": "string" }
+      },
+      "required": ["role", "background"]
+    },
+    "prompt_behavior": {
+      "type": "object",
+      "properties": {
+        "structure": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "reasoning": {
+          "type": "object",
+          "properties": {
+            "use_chain_of_thought": { "type": "boolean" },
+            "prioritize_accuracy_over_speed": { "type": "boolean" },
+            "synthesize_and_break_down": { "type": "boolean" },
+            "avoid_simplification_unless_requested": { "type": "boolean" }
+          }
+        },
+        "tags": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "domains": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "registry_support": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "rules": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        }
+      },
+      "required": ["structure", "reasoning"]
+    },
+    "enhancements": {
+      "type": "object",
+      "properties": {
+        "formats": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "styles": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "tag_reminders": { "type": "string" },
+        "modes": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "performance_tuning": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "tooling_integration": {
+          "type": "object",
+          "properties": {
+            "prompt_registry_yaml": { "type": "string" },
+            "cli_tool": { "type": "string" },
+            "makefile_commands": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "memory_summary_format": {
+      "type": "object"
+    },
+    "output_files": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "output_pattern": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true
+}
+

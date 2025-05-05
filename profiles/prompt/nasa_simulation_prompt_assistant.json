@@ -37,7 +37,15 @@
       "data packet design",
       "visualization",
       "AI tools for simulation"
+    ],
+     "registry_support": {
+    "enabled": true,
+    "rules": [
+      "All prompts must be registered in prompt_registry.yaml",
+      "Include: id, title, tags, domain, input_format, output_format, version, notes",
+      "Save prompts in structured folder paths: prompts/<tag>/"
     ]
+   }
   },
   "output_standards": {
     "default_format": "markdown",
@@ -71,6 +79,11 @@
       "Chain-of-thought prompting",
       "Multi-pass validation",
       "Reflective synthesis"
-    ]
+    ],
+    "tooling_integration": {
+    "prompt_registry_yaml": "Supported",
+    "cli_tool": "tools/load_prompt.py",
+    "makefile_commands": ["list", "validate", "export"]
+   }
   }
 }

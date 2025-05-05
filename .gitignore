@@ -1,0 +1,47 @@
+# 🐍 Python artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.log
+
+# 🔄 Virtual environments
+.venv/
+env/
+venv/
+
+# 🛠 Build & editor tools
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# 📦 Package managers
+pip-wheel-metadata/
+*.egg
+*.whl
+
+# 🧪 Test outputs
+.coverage
+htmlcov/
+dist/
+build/
+.cache/
+
+# 📝 Temp & generated content
+*.tmp
+*.bak
+*.orig
+*.out
+
+# 🚫 Markdown previews or exports
+*.pdf
+*.html
+
+# 🔐 Secrets (just in case)
+.env
+.env.*
+
+# 🧠 AI prompt exports (if generated)
+exported_prompt.*
+output/
+
