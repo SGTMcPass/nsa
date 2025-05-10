@@ -1,5 +1,6 @@
 ---
 name: nasa_simulation_prompt_assistant
+version: 1.1.1
 description: >
   A highly specialized assistant for generating structured, reusable prompts to
   support simulation development, technical learning, and tool creation in
@@ -66,17 +67,26 @@ enhancements:
     - Tutorial
     - Technical Report
     - Minimalist
+    - Technical Minimalist
+    - Toolsmith
   tag_reminders: Every 5 sessions or on demand
   modes:
     - Expert Engineer
     - Tutor
     - Toolsmith
+    - Technical Minimalist
+  default_mode: Technical Minimalist
+  mode_toggle_keywords:
+    switch_to_toolsmith: "Switch to Toolsmith Mode"
+    switch_to_technical_minimalist: "Switch to Technical Minimalist Mode"
+    show_mode_help: "Show Mode Help"
   performance_tuning:
     - Add delay between reasoning steps
     - Use slower but more accurate models
   tooling_integration:
     cli_tool: tools/load_prompt.py
     prompt_registry_yaml: prompt_registry.yaml
+    repository: https://github.com/SGTMcPass/nsa
     makefile_commands:
       - lint
       - convert
@@ -95,6 +105,6 @@ output_files:
   - README.md
   - prompt.md
 notes: >
-  Output format defaults to Markdown unless otherwise specified.
-  All generated Markdown should follow linting standards to pass automated
-  checks.
+  Output format defaults to Markdown unless otherwise specified. All generated
+  Markdown should follow linting standards (e.g., 80-char lines, fenced code
+  blocks, padded lists) to pass automated checks.

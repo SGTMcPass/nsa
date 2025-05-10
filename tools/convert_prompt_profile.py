@@ -1,138 +1,179 @@
 #!/usr/bin/env python3
 """
-convert_prompt_profile.py — Convert assistant profile between JSON, YAML, and Markdown formats.
+convert_prompt_profile.py — Converts a YAML assistant profile to JSON and Markdown.
+Validates JSON against the assistant schema.
 """
+
+import yaml
+import json
 import sys
+from textwrap import fill
+from jsonschema import validate, ValidationError
 from pathlib import Path
 
-# ✅ Allow relative imports when run as script
-if __name__ == "__main__" and __package__ is None:
-    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-
-import textwrap
-import json
-import yaml
-import argparse
+# Constants
+SCHEMA_PATH = (
+    Path(__file__).parent.parent / "schemas/assistant_profile.schema.v1.0.0.json"
+)
 
 
-def load_profile(path: Path):
-    if path.suffix == ".json":
-        return json.loads(path.read_text()), "json"
-    elif path.suffix in [".yaml", ".yml"]:
-        return yaml.safe_load(path.read_text()), "yaml"
-    else:
-        raise ValueError(f"Unsupported input format: {path.suffix}")
+def load_schema():
+    """Load the JSON schema for assistant profile validation."""
+    try:
+        with open(SCHEMA_PATH, "r") as f:
+            schema = json.load(f)
+        return schema
+    except FileNotFoundError:
+        print(f"[ERROR] Schema file not found at {SCHEMA_PATH}")
+        sys.exit(1)
 
 
-def save_yaml(data, out_path):
-    with open(out_path, "w") as f:
-        yaml.dump(data, f, sort_keys=False)
-    print(f"[✅] YAML saved to: {out_path}")
+def wrap_text(text, width=80):
+    """Wraps text to a specified width for Markdown compatibility."""
+    return "\n".join([fill(line, width) for line in text.splitlines()])
 
 
-def save_json(data, out_path):
-    with open(out_path, "w") as f:
-        json.dump(data, f, indent=2)
-    print(f"[✅] JSON saved to: {out_path}")
+def yaml_to_json(yaml_data):
+    """Converts the loaded YAML to structured JSON"""
+    required_sections = ["prompt_behavior", "enhancements", "user_profile"]
+    for section in required_sections:
+        if section not in yaml_data:
+            raise ValueError(f"[❌] Missing required section: {section}")
+
+    json_data = {
+        "name": yaml_data.get("name"),
+        "description": yaml_data.get("description"),
+        "user_profile": yaml_data.get("user_profile"),
+        "prompt_behavior": yaml_data.get("prompt_behavior"),
+        "enhancements": yaml_data.get("enhancements"),
+        "memory_summary_format": yaml_data.get("memory_summary_format"),
+        "output_files": yaml_data.get("output_files"),
+        "output_pattern": yaml_data.get("output_pattern"),
+        "notes": yaml_data.get("notes", ""),
+    }
+
+    return json_data
 
 
-def save_markdown(data, out_path, source_name):
-    md = f"# NASA Simulation Assistant Profile\n\n> Converted from `{source_name}`\n"
+def yaml_to_markdown(yaml_data):
+    """Converts the loaded YAML to Markdown format with lint compliance"""
+    return f"""
+# {yaml_data.get('name')}
 
-    def section(title):
-        return f"\n## {title}\n"
+**Description:**
+{wrap_text(yaml_data.get('description'))}
 
-    user = data.get("user_profile", {})
-    md += section("👤 User Profile")
-    for key, value in user.items():
-        line = f"- **{key.capitalize()}**: {', '.join(value) if isinstance(value, list) else value}"
-        md += line + "\n"
+---
 
-    pb = data.get("prompt_behavior", {})
-    md += section("🎯 Prompt Behavior")
+## 🧑‍🚀 User Profile
 
-    structure = pb.get("structure", [])
-    if structure:
-        md += "\n**Structure:**\n"
-        for item in structure:
-            md += f"- {item}\n"
+- **Role:** {yaml_data['user_profile']['role']}
+- **Background:** {wrap_text(yaml_data['user_profile']['background'])}
 
-    reasoning = pb.get("reasoning", {})
-    if reasoning:
-        md += "\n**Reasoning Approach:**\n"
-        for key, val in reasoning.items():
-            md += f"- {key.replace('_', ' ').capitalize()}: {'✅' if val else '❌'}\n"
+- **Languages:**
+  {wrap_text(", ".join(yaml_data['user_profile']['languages']))}
 
-    tags = pb.get("tags", {})
-    if tags:
-        md += "\n**Tag Controls:**\n"
-        for k, v in tags.items():
-            md += f"- `{k}` → {v}\n"
+- **Tools:**
+  {wrap_text(", ".join(yaml_data['user_profile']['tools']))}
 
-    domains = pb.get("domains", [])
-    if domains:
-        md += "\n**Domains:**\n"
-        for d in domains:
-            md += f"- {d}\n"
+- **Formats:**
+  {wrap_text(", ".join(yaml_data['user_profile']['formats']))}
 
-    if pb.get("registry_support"):
-        md += "\n**Registry Support Rules:**\n"
-        for r in pb["registry_support"].get("rules", []):
-            md += f"- {r}\n"
+- **Platforms:**
+  {wrap_text(", ".join(yaml_data['user_profile']['platforms']))}
 
-    enh = data.get("enhancements", {})
-    md += section("🛠 Optional Enhancements")
-    for k, v in enh.items():
-        if isinstance(v, list):
-            md += f"- **{k.replace('_', ' ').capitalize()}**:\n"
-            for i in v:
-                md += f"  - {i}\n"
-        elif isinstance(v, dict):
-            md += f"- **{k.replace('_', ' ').capitalize()}**:\n"
-            for sub_k, sub_v in v.items():
-                if isinstance(sub_v, list):
-                    md += f"  - {sub_k}: {', '.join(sub_v)}\n"
-                else:
-                    md += f"  - {sub_k}: {sub_v}\n"
-        else:
-            md += f"- **{k}**: {v}\n"
+- **Style:** {yaml_data['user_profile']['style']}
 
-    Path(out_path).write_text(md)
-    print(f"[✅] Markdown saved to: {out_path}")
+---
 
+## 🔍 Prompt Behavior
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Convert assistant profile between JSON, YAML, and Markdown"
-    )
-    parser.add_argument("input_file", help="Input JSON or YAML file")
-    parser.add_argument("--json", help="Output JSON file (if input is YAML)")
-    parser.add_argument("--yaml", help="Output YAML file (if input is JSON)")
-    parser.add_argument("--markdown", help="Output Markdown file")
+- **Structure:**
+  {wrap_text(", ".join(yaml_data['prompt_behavior']['structure']))}
 
-    args = parser.parse_args()
-    input_path = Path(args.input_file)
+- **Reasoning Style:**
+  {wrap_text(", ".join(f"{k}: {v}" for k, v in yaml_data['prompt_behavior']['reasoning'].items()))}
 
-    if not input_path.exists():
-        print(f"[❌] File not found: {input_path}")
-        return
+- **Tags:**
+  {wrap_text(", ".join(yaml_data['prompt_behavior']['tags'].keys()))}
 
-    data, input_format = load_profile(input_path)
+- **Domains:**
+  {wrap_text(", ".join(yaml_data['prompt_behavior']['domains']))}
 
-    # Default output filenames
-    default_json = input_path.with_suffix(".json")
-    default_yaml = input_path.with_suffix(".yaml")
-    default_md = input_path.with_suffix(".md")
+---
 
-    if input_format == "json":
-        save_yaml(data, Path(args.yaml) if args.yaml else default_yaml)
-    elif input_format == "yaml":
-        save_json(data, Path(args.json) if args.json else default_json)
+## 🚀 Enhancements
 
-    save_markdown(
-        data, Path(args.markdown) if args.markdown else default_md, input_path.name
-    )
+- **Formats:**
+  {wrap_text(", ".join(yaml_data['enhancements']['formats']))}
+
+- **Styles:**
+  {wrap_text(", ".join(yaml_data['enhancements']['styles']))}
+
+- **Modes:**
+  {wrap_text(", ".join(yaml_data['enhancements']['modes']))}
+
+- **Tooling Integration:**
+  - CLI Tool: {yaml_data['enhancements']['tooling_integration']['cli_tool']}
+  - Registry: {yaml_data['enhancements']['tooling_integration']['prompt_registry_yaml']}
+  - Makefile Commands:
+    {wrap_text(", ".join(yaml_data['enhancements']['tooling_integration']['makefile_commands']))}
+
+---
+
+## 📝 Notes
+
+{wrap_text(yaml_data.get('notes', 'N/A'))}
+    """
 
 
+def convert(yaml_file):
+    """Main conversion logic"""
+    try:
+        yaml_path = Path(yaml_file)
+        if not yaml_path.exists():
+            print(f"[❌] YAML file not found: {yaml_file}")
+            sys.exit(1)
+
+        with open(yaml_path, "r") as f:
+            data = yaml.safe_load(f)
+
+        # Generate filenames
+        json_file = yaml_path.with_suffix(".json")
+        md_file = yaml_path.with_suffix(".md")
+
+        # Convert to JSON
+        json_data = yaml_to_json(data)
+
+        # Validate JSON
+        schema = load_schema()
+        validate(instance=json_data, schema=schema)
+        print("✅ JSON is valid against the schema.")
+
+        # Write JSON
+        with open(json_file, "w") as f:
+            json.dump(json_data, f, indent=4)
+        print(f"✅ Successfully converted to '{json_file}'")
+
+        # Convert to Markdown
+        markdown_data = yaml_to_markdown(data)
+
+        # Write Markdown
+        with open(md_file, "w") as f:
+            f.write(markdown_data.strip() + "\n")  # Ensure newline at EOF
+        print(f"✅ Successfully converted to '{md_file}'")
+
+    except ValidationError as ve:
+        print(f"[❌] Schema Validation Error: {ve.message}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"[❌] Conversion failed: {e}")
+        sys.exit(1)
+
+
+# Command-line usage
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) != 2:
+        print("Usage: python convert_prompt_profile.py <input_yaml>")
+    else:
+        convert(sys.argv[1])
