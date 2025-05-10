@@ -1,6 +1,9 @@
 # Makefile for nasa-simulation-assistants
 
-.PHONY: all list validate export help
+.PHONY: all list validate export convert-profile validate-profile help
+
+YAML_FILE=profiles/prompt/nasa_simulation_prompt_assistant.yaml
+CONVERT_SCRIPT=tools/convert_prompt_profile.py
 
 all: list
 
@@ -25,6 +28,12 @@ lint:
 validate-prompts:
 	@echo "🔎 Validating prompt structure and metadata..."
 	@python3 tools/validate_prompt_files.py
+convert-profile:
+	@echo "🚀 Converting YAML to JSON and Markdown..."
+	python3 $(CONVERT_SCRIPT) $(YAML_FILE)
+	@echo "🔎 Running pre-commit validation on generated files..."
+	pre-commit run --all-files
+	@echo "✅ Conversion and validation complete."
 help:
 	@echo "🛠️  Available Makefile targets:"
 	@echo "  make list         - List all registered prompts"
