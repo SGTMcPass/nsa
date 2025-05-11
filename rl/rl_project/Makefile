@@ -1,4 +1,4 @@
-.PHONY: build run clean docker-run docker-clean compose-up compose-down
+.PHONY: build run clean docker-run docker-clean compose-up compose-down test
 
 build:
 	docker build -t rl_agent:latest .
@@ -22,3 +22,6 @@ compose-up:
 
 compose-down:
 	docker-compose down
+
+test:
+	python3 -m unittest discover tests/
