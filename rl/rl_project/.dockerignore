@@ -1,0 +1,20 @@
+# Ignore Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environments
+venv/
+.env/
+
+# Git
+.git
+.gitignore
+
+# IDE configurations
+.vscode/
+.idea/
+
+# OS generated files
+.DS_Store
+Thumbs.db
