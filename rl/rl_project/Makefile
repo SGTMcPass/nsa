@@ -1,4 +1,4 @@
-.PHONY: build run clean docker-run docker-clean
+.PHONY: build run clean docker-run docker-clean compose-up compose-down
 
 build:
 	docker build -t rl_agent:latest .
@@ -16,3 +16,9 @@ docker-run:
 docker-clean:
 	docker container prune -f
 	docker image prune -a -f
+
+compose-up:
+	docker-compose up --build
+
+compose-down:
+	docker-compose down
