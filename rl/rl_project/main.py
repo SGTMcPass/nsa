@@ -1,31 +1,25 @@
 # main.py
 from environments.gridworld import RLWorld
 from agents.q_learning_agent import Agent
+from trainers.advanced_trainer import AdvancedTrainer
+from visualization.plot_agent_path import plot_agent_path
+from visualization.plot_q_values import plot_q_values
 
-# Initialize the environment and the agent
+# Initialize environment and agent
 env = RLWorld(width=5, height=5)
 agent = Agent(actions=["UP", "DOWN", "LEFT", "RIGHT"])
 
-# Training parameters
-episodes = 10
-max_steps = 50
+# Initialize the trainer
+trainer = AdvancedTrainer(agent=agent, environment=env, episodes=100, max_steps=50)
 
-# Training loop
-for episode in range(episodes):
-    print(f"Episode {episode + 1} Start")
-    state = env.reset()
-    for step in range(max_steps):
-        action = agent.select_action(state)
-        next_state, reward, done = env.step(action)
-        agent.learn(state, action, reward, next_state)
-        state = next_state
-        env.render()
-        print(
-            f"Step: {step + 1}, Action: {action}, State: {state}, Reward: {reward}, Done: {done}"
-        )
-        print("-" * 20)
-        if done:
-            print("🏁 Goal reached! Episode complete.")
-            break
-    print(f"Episode {episode + 1} End\n")
-    print("=" * 40)
+# Run training
+trainer.train()
+
+# Plot the agent path using the tracked path history
+plot_agent_path((5, 5), trainer.path_history, trainer.environment.goal_state)
+
+# Plot the Q-Value Heatmap
+plot_q_values(agent, (5, 5))
+
+# Plot the reward trajectory
+trainer.plot_rewards()

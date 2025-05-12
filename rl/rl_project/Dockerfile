@@ -1,4 +1,4 @@
-# Use the official Python image from DockerHub
+# Dockerfile
 FROM python:3.12-slim
 
 # Set the working directory inside the container
@@ -10,6 +10,10 @@ COPY . /app
 # Install dependencies
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
+RUN pip install matplotlib numpy
 
-# Set the entrypoint for the container to run the main.py script
-ENTRYPOINT ["python", "main.py"]
+# Make sure the output folder is accessible
+RUN mkdir -p /app/output && chmod -R 777 /app/output
+
+# Use CMD instead of ENTRYPOINT for easier shell access
+CMD ["python3", "main.py"]

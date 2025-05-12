@@ -1,4 +1,4 @@
-.PHONY: build run clean docker-run docker-clean compose-up compose-down test
+.PHONY: build run clean docker-run docker-clean compose-up compose-down test docker-visualize
 
 build:
 	docker build -t rl_agent:latest .
@@ -25,3 +25,6 @@ compose-down:
 
 test:
 	python3 -m unittest discover tests/
+
+docker-visualize:
+	docker run --rm -v /home/rmcphail/repos/nasa-simulation-agents/rl/rl_project/output:/app/output rl_agent

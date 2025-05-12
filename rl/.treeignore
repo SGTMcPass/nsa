@@ -1,0 +1,40 @@
+# Ignore all hidden files and folders
+.*
+*/.*
+
+# Ignore log files
+*.log
+
+# Ignore temp files
+*.tmp
+*.bak
+*.swp
+
+# Ignore node modules and build artifacts
+node_modules/
+dist/
+build/
+
+# Ignore virtual environments
+# Exclude only the directories inside the virtual environment
+venv/bin/
+venv/lib/
+venv/include/
+venv/share/
+venv/pyvenv.cfg
+.venv/bin/
+.venv/lib/
+.venv/include/
+.venv/share/
+.venv/pyvenv.cfg
+__pycache__/
+
+# Ignore version control directories
+.git/
+.hg/
+.svn/
+
+# Ignore system-specific files
+.DS_Store
+Thumbs.db
+desktop.ini
