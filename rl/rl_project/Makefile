@@ -1,30 +1,34 @@
-.PHONY: build run clean docker-run docker-clean compose-up compose-down test docker-visualize
+.PHONY: clean spotless docker-build docker-run docker-clean docker-rebuild
 
-build:
-	docker build -t rl_agent:latest .
-
-run:
-	python3 main.py
-
-clean:
-	find . -type f -name '*.pyc' -delete
-	find . -type d -name '__pycache__' -exec rm -r {} +
+# === Docker Commands ===
+docker-build:
+	@echo "🐳 Building Docker image 'rl_agent:latest'..."
+	@docker build -t rl_agent:latest .
 
 docker-run:
-	docker run --rm rl_agent
-
+	@echo "🐳 Running Docker container for RL Agent..."
+	@docker run -it --rm \
+		--user $(USER_ID):$(GROUP_ID) \
+		-v $(PWD)/output:/app/output rl_agent
 docker-clean:
-	docker container prune -f
-	docker image prune -a -f
+	@echo "🗑️  Cleaning up Docker containers and images..."
+	-@docker stop $$(docker ps -aq --filter ancestor=rl_agent) 2>/dev/null || true
+	-@docker rm $$(docker ps -aq --filter ancestor=rl_agent) 2>/dev/null || true
+	-@docker rmi rl_agent:latest --force 2>/dev/null || true
+	-@docker image prune -f
 
-compose-up:
-	docker-compose up --build
+docker-rebuild: docker-clean docker-build
+	@echo "🔄 Docker image rebuilt successfully!"
 
-compose-down:
-	docker-compose down
+# === Local Cleanup ===
+clean:
+	@echo "🗑️  Removing local output files..."
+	rm -rf output/*.png
+	rm -rf output/*.gif
+	rm -rf output/*.log
+	rm -rf output/*.pkl
+	@echo "✅ Local cleanup complete."
 
-test:
-	python3 -m unittest discover tests/
-
-docker-visualize:
-	docker run --rm -v /home/rmcphail/repos/nasa-simulation-agents/rl/rl_project/output:/app/output rl_agent
+# === Spotless Cleanup (Docker + Local) ===
+spotless: clean docker-clean
+	@echo "🚀 All Docker containers, images, and generated files have been removed!"

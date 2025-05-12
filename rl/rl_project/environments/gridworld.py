@@ -102,22 +102,38 @@ class RLWorld:
     def step(self, action):
         """
         Executes the action in the environment if it is valid.
+
+        Parameters:
+        - action (str): Action to execute ('UP', 'DOWN', 'LEFT', 'RIGHT')
+
+        Returns:
+        - tuple: (new_state, reward, done)
         """
         if not self.validate_action(action):
             print(f"❌ Step failed: Invalid action {action}")
-            return self.current_state, -5, False
+            return self.current_state, -5, False, False
 
         move = self.actions[action]
         new_state = (self.current_state[0] + move[0], self.current_state[1] + move[1])
+
+        # ✅ Detect if the new state is an obstacle
+        if new_state in self.obstacles:
+            print(f"💥 Collision detected at {new_state}")
+            return (
+                self.current_state,
+                -10,
+                False,
+                True,
+            )  # Stronger penalty for collision
 
         # Agent moves successfully
         self.current_state = new_state
 
         # Check if we reached the goal
         if self.current_state == self.goal_state:
-            return self.current_state, 1, True
+            return self.current_state, 1, True, False
         else:
-            return self.current_state, -0.1, False
+            return self.current_state, -0.1, False, False
 
     def is_path_available(self):
         """
