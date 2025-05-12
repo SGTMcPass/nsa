@@ -12,7 +12,7 @@ RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 RUN pip install matplotlib numpy
 
-# Make sure the output folder is accessible
+# Set permissions for output folder
 RUN mkdir -p /app/output && chmod -R 777 /app/output
 
 # Use CMD instead of ENTRYPOINT for easier shell access

@@ -1,5 +1,9 @@
 # trainers/advanced_trainer.py
+import matplotlib
+
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import os
 
 
 class AdvancedTrainer:
@@ -14,14 +18,6 @@ class AdvancedTrainer:
     ):
         """
         Advanced Trainer for RL Agent with dynamic exploration and reward shaping.
-
-        Parameters:
-        - agent: The Q-learning agent.
-        - environment: The environment (GridWorld).
-        - episodes: Number of training episodes.
-        - max_steps: Maximum steps per episode.
-        - epsilon_decay: Rate at which exploration reduces.
-        - min_epsilon: The lowest possible exploration rate.
         """
         self.agent = agent
         self.environment = environment
@@ -30,32 +26,33 @@ class AdvancedTrainer:
         self.epsilon_decay = epsilon_decay
         self.min_epsilon = min_epsilon
         self.training_rewards = []
-        self.path_history = []  # ✅ Added this to track the path
+        self.path_history = []
 
     def train(self):
-        """
-        Train the agent over multiple episodes with decay-based exploration.
-        """
         for episode in range(self.episodes):
             state = self.environment.reset()
             total_reward = 0
-            episode_path = [state]  # Start tracking the path
+            episode_path = [state]
+            visited_states = set()
 
             for step in range(self.max_steps):
+                if state in visited_states:
+                    # Penalize revisiting the same state
+                    total_reward -= 0.5
+                    print(f"🔁 Loop detected at {state}! Penalty applied.")
+                visited_states.add(state)
+
                 action = self.agent.select_action(state)
                 next_state, reward, done = self.environment.step(action)
                 self.agent.learn(state, action, reward, next_state)
                 state = next_state
                 total_reward += reward
-                episode_path.append(state)  # Add each state to the path
+                episode_path.append(state)
 
                 if done:
                     break
 
-            # Store the final path of the episode
             self.path_history = episode_path
-
-            # Decay the exploration rate and clip it to a minimum value
             self.agent.exploration_rate = max(
                 self.min_epsilon, self.agent.exploration_rate * self.epsilon_decay
             )
@@ -67,10 +64,13 @@ class AdvancedTrainer:
 
         print("Training completed.")
 
-    def plot_rewards(self, save_path="output/reward_trajectory.png"):
+    def plot_rewards(self, save_path="output/agent_path.png"):
         """
         Plots the reward accumulation over episodes and saves it as a PNG.
         """
+        print(
+            f"📝 Checking if path exists: {os.path.exists('/app/output')}"
+        )  # Debugging line
         plt.figure(figsize=(6, 4))
         plt.plot(self.training_rewards, label="Total Reward")
         plt.title("Training Rewards Over Time")
@@ -79,4 +79,5 @@ class AdvancedTrainer:
         plt.grid()
         plt.legend()
         plt.savefig(save_path)
+        print(f"✅ Plot saved to {save_path}")
         plt.close()
