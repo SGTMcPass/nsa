@@ -11,3 +11,20 @@ yamllint>=1.33.0
 
 # === Optional enhancement (e.g. rich output, argparse help) ===
 rich>=13.0.0
+
+# ───────── core parsing / chunking ─────────────────────────
+markdown-it-py>=3.0.0        # import markdown_it
+python-frontmatter>=1.0.0    # import frontmatter
+tiktoken>=0.6.0              # OpenAI token-counter
+PyYAML>=6.0                  # optional YAML overrides for rules / maps
+
+# ───────── OpenAI + embeddings ────────────────────────────
+openai>=1.14.0               # chat & embedding endpoints
+
+# ───────── Postgres + pgvector client stack ───────────────
+psycopg2-binary>=2.9         # Postgres driver (system-lib free)
+pgvector>=0.2.4              # adds the <-> operator + helpers
+
+# ───────── niceties / CLI UX ──────────────────────────────
+tqdm>=4.66                   # progress bars for embedding scripts
+

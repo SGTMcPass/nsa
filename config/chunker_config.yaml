@@ -1,0 +1,57 @@
+# config.yaml
+
+# Root of the Trick repository (use your environment variable)
+docs_root: "${TRICK_HOME}/docs"
+
+# Directory → document type mapping (longest prefixes first)
+dir_map:
+  # top-level docs
+  "docs/developer_docs":                                "reference"
+  "docs/related_projects":                              "reference"
+  "docs/howto_guides":                                  "howto"
+  "docs/tutorial":                                      "howto"
+  "docs/faq":                                           "troubleshoot"
+
+  # docs/documentation subfolders
+  "docs/documentation/building_a_simulation":           "howto"
+  "docs/documentation/install_guide":                   "howto"
+  "docs/documentation/running_a_simulation":            "howto"
+
+  "docs/documentation/introduction":                    "concept"
+  "docs/documentation/data_products":                   "concept"
+  "docs/documentation/simulation_capabilities":         "concept"
+  "docs/documentation/simulation_utilities":            "concept"
+  "docs/documentation/software_requirements_specification": "concept"
+
+  "docs/documentation/miscellaneous_trick_tools":       "reference"
+  "docs/documentation/web":                             "reference"
+
+  # any other directories you want to explicitly classify
+  "docs/not_referenced":                                "unknown"
+
+# Target token counts per document category
+chunk_rules:
+  reference:   350
+  howto:       600
+  concept:     1000
+  troubleshoot: 500
+  unknown:     600
+
+# Fraction of overlap between consecutive chunks (e.g. 0.15 = 15%)
+overlap_pc: 0.15
+
+# File extensions to skip when crawling links (images, binaries, etc.)
+image_ext:
+  - ".png"
+  - ".jpg"
+  - ".jpeg"
+  - ".gif"
+  - ".svg"
+  - ".webp"
+  - ".bmp"
+  - ".ico"
+  - ".pdf"
+
+# Optional version tag for metadata entries
+version: "1.0.0"
+

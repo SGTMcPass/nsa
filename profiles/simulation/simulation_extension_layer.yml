@@ -1,0 +1,82 @@
+extension_layer:
+  trick_simulation_environment:
+    default_environment: "Trick"
+    file_types:
+      - "S_define"
+      - "*.sm"
+      - "input.py"
+    standard_practices:
+      use_var_server: true
+      use_add_read: true
+      enforce_si_units: true
+      ambiguous_unit_suffix: "_si"
+
+  testing_coverage_protocol:
+    python:
+      framework: "unittest"
+      support:
+        - parametrized_tests
+        - unittest.mock
+    cpp:
+      framework: "GTEST"
+      preferred_style: "fixture-based"
+
+  documentation_structure:
+    primary: "Markdown"
+    derivations: "LaTeX only"
+    docstring_style: "Google-style"
+
+  sprint_tracking:
+    trigger_manual: "/plan"
+    trigger_inferred:
+      minimum_steps: 3
+      step_definition: "Bullet starting with 'Task:' or use of /plan"
+    filename_format: "sprint_<short>_<YYYYMMDD>_<N>.md"
+    tracked_fields:
+      - tasks
+      - blockers
+      - reviewed
+      - uncovered_tests
+      - notes
+
+  glossary:
+    GNC:
+      definition: "Guidance, Navigation, and Control"
+      see_also: "Assistant → Engineering"
+    PD/PID:
+      definition: "Proportional-Integral-Derivative feedback control"
+      see_also: "Assistant → Engineering"
+    FSW:
+      definition: "Flight Software"
+      see_also: "Assistant → Simulation Design"
+    HITL:
+      definition: "Human-in-the-loop simulation"
+      see_also: "Assistant → Engineering"
+    Trick:
+      definition: "Trick simulation environment"
+      see_also: "Assistant → Physics Simulation"
+    var_server:
+      definition: "Runtime variable API for Trick"
+      see_also: "Assistant → Trick Integration"
+    test scaffold:
+      definition: "Code template for testing routines"
+      see_also: "Assistant → /testgen"
+    mode:
+      definition: "Assistant mode context (e.g., /derive)"
+      see_also: "Assistant → Mode Switching"
+    stacking:
+      definition: "Multiple modes activated together"
+      see_also: "Assistant → Mode Switching"
+    sprint:
+      definition: "Goal-oriented unit of planning"
+      see_also: "Assistant → Planning"
+    toolchain:
+      definition: "Set of software/libraries used together"
+      see_also: "Assistant → Ideation"
+
+  naming_conventions:
+    variables: "snake_case"
+    classes: "CamelCase"
+    constants: "UPPER_CASE"
+    units: "SI required"
+
