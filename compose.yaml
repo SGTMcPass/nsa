@@ -1,0 +1,14 @@
+---
+services:
+  pgtrick:
+    image: ankane/pgvector:latest
+    container_name: pgtrick
+    environment:
+      POSTGRES_PASSWORD: trickpass
+      POSTGRES_USER: trickuser
+      POSTGRES_DB: trickdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+volumes: {pgdata: {}}

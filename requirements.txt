@@ -27,4 +27,3 @@ pgvector>=0.2.4              # adds the <-> operator + helpers
 
 # ───────── niceties / CLI UX ──────────────────────────────
 tqdm>=4.66                   # progress bars for embedding scripts
-

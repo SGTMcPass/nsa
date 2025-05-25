@@ -34,7 +34,7 @@ def crawl_docs(seed: Path, docs_root: Path) -> List[Path]:
 
         for tok in tokens:
             # 1) Markdown-style links
-            if tok.type == 'inline':
+            if tok.type == "inline":
                 for m in md_link_re.finditer(tok.content):
                     href = m.group(1)
                     dst = normalize_href(href, base, docs_root)
@@ -42,7 +42,7 @@ def crawl_docs(seed: Path, docs_root: Path) -> List[Path]:
                         stack.append(dst)
 
             # 2) HTML <a href="..."> links within raw HTML tokens
-            if tok.type.startswith('html_') or tok.type == 'html_inline':
+            if tok.type.startswith("html_") or tok.type == "html_inline":
                 for m in html_href_re.finditer(tok.content):
                     href = m.group(1)
                     dst = normalize_href(href, base, docs_root)
@@ -50,4 +50,3 @@ def crawl_docs(seed: Path, docs_root: Path) -> List[Path]:
                         stack.append(dst)
 
     return result
-

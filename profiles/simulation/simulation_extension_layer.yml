@@ -1,3 +1,5 @@
+---
+
 extension_layer:
   trick_simulation_environment:
     default_environment: "Trick"
@@ -79,4 +81,3 @@ extension_layer:
     classes: "CamelCase"
     constants: "UPPER_CASE"
     units: "SI required"
-

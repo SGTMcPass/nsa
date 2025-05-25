@@ -13,13 +13,15 @@ def write_manifest(metadata: List[Dict], output_dir: Path) -> None:
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     # JSONL
-    with (output_dir / 'chunks.jsonl').open('w', encoding='utf-8') as jf:
+    with (output_dir / "chunks.jsonl").open("w", encoding="utf-8") as jf:
         for m in metadata:
-            jf.write(json.dumps(m, ensure_ascii=False) + '\n')
+            jf.write(json.dumps(m, ensure_ascii=False) + "\n")
     # Markdown manifest
-    with (output_dir / 'chunks_manifest.md').open('w', encoding='utf-8') as mf:
-        mf.write('| chunk_id | type | path | heading | preview |\n')
-        mf.write('|---|---|---|---|---|\n')
+    with (output_dir / "chunks_manifest.md").open("w", encoding="utf-8") as mf:
+        mf.write("| chunk_id | type | path | heading | preview |\n")
+        mf.write("|---|---|---|---|---|\n")
         for m in metadata:
-            p = m.get('preview', '').replace('|', '&#124;')
-            mf.write(f"| {m['chunk_id']} | {m['type']} | {m['path']} | {m['heading']} | {p} |\n")
+            p = m.get("preview", "").replace("|", "&#124;")
+            mf.write(
+                f"| {m['chunk_id']} | {m['type']} | {m['path']} | {m['heading']} | {p} |\n"
+            )

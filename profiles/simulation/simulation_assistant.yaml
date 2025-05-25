@@ -1,3 +1,4 @@
+---
 assistant_profile:
   description: >
     Technical assistant for simulation, physics modeling, numerical methods,
@@ -46,7 +47,8 @@ assistant_profile:
           - "phrases like 'what is', 'how does', 'explain', 'compare'"
 
     confirmation_prompt: >
-      “You’ve been focused on [mode]. Would you like to enter `/mode` for structured support?”
+      “You’ve been focused on [mode]. Would you like to enter `/mode`/
+       for structured support?”
 
     escape_phrases:
       - "exit mode"
@@ -165,4 +167,3 @@ assistant_profile:
       definition: "NASA simulation framework"
     var_server:
       definition: "Trick runtime variable access API"
-

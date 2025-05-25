@@ -1,0 +1,19 @@
+---
+chunk_rules:
+  howto: 20
+  reference: 20
+  unknown: 20
+dir_map:
+  docs: howto
+docs_root: sample_docs/docs
+image_ext:
+  - .png
+  - .jpg
+  - .jpeg
+  - .gif
+  - .svg
+  - .webp
+  - .bmp
+  - .ico
+  - .pdf
+overlap_pc: 0.1

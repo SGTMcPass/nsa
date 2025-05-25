@@ -18,17 +18,13 @@ import psutil
 
 # ---------------- CONFIG -----------------
 LOG_FMT = "%(asctime)s [HEARTBEAT] %(message)s"
-logging.basicConfig(stream=sys.stdout,
-                    level=logging.INFO,
-                    format=LOG_FMT,
-                    datefmt="%Y-%m-%d %H:%M:%S")
+logging.basicConfig(
+    stream=sys.stdout, level=logging.INFO, format=LOG_FMT, datefmt="%Y-%m-%d %H:%M:%S"
+)
 # -----------------------------------------
 
-def _sampler(pid: int,
-             interval: int,
-             cpu_thresh: float,
-             samples: int,
-             on_stall):
+
+def _sampler(pid: int, interval: int, cpu_thresh: float, samples: int, on_stall):
     """
     Sample CPU & IO; call `on_stall()` if below threshold for `samples`
     consecutive intervals.
@@ -38,13 +34,12 @@ def _sampler(pid: int,
     while proc.is_running():
         try:
             cpu = proc.cpu_percent(interval=None)  # instant pct since last call
-            io  = proc.io_counters().read_bytes + proc.io_counters().write_bytes
+            io = proc.io_counters().read_bytes + proc.io_counters().write_bytes
             time.sleep(interval)
             cpu_now = proc.cpu_percent(interval=None) / psutil.cpu_count()
-            io_now  = (proc.io_counters().read_bytes +
-                       proc.io_counters().write_bytes)
+            io_now = proc.io_counters().read_bytes + proc.io_counters().write_bytes
             cpu_delta = cpu_now
-            io_delta  = io_now - io
+            io_delta = io_now - io
             if cpu_delta < cpu_thresh and io_delta == 0:
                 low_count += 1
                 if low_count >= samples:
@@ -55,15 +50,19 @@ def _sampler(pid: int,
         except psutil.NoSuchProcess:
             break
 
+
 def _heartbeat(interval: int):
     while True:
         logging.info("still running…")
         time.sleep(interval)
 
-def start_heartbeat(interval: int = 60,
-                    cpu_thresh: float = 1.0,
-                    samples: int = 3,
-                    pid: Optional[int] = None):
+
+def start_heartbeat(
+    interval: int = 60,
+    cpu_thresh: float = 1.0,
+    samples: int = 3,
+    pid: Optional[int] = None,
+):
     """
     Fire-and-forget: starts background threads that
     1) log a heartbeat every `interval` seconds
@@ -85,25 +84,34 @@ def start_heartbeat(interval: int = 60,
     def warn(cpu, io):
         logging.warning(f"⚠️  Possible stall: cpu={cpu:.2f}% Δio={io} bytes")
 
-    threading.Thread(target=_heartbeat,
-                     args=(interval,),
-                     daemon=True).start()
+    threading.Thread(target=_heartbeat, args=(interval,), daemon=True).start()
 
-    threading.Thread(target=_sampler,
-                     args=(pid, interval, cpu_thresh, samples, warn),
-                     daemon=True).start()
+    threading.Thread(
+        target=_sampler, args=(pid, interval, cpu_thresh, samples, warn), daemon=True
+    ).start()
+
 
 # ---------- CLI wrapper mode -------------
+
 
 def main():
     parser = argparse.ArgumentParser(description="Heartbeat & stall monitor")
     parser.add_argument("--cmd", help="Command to run & monitor")
-    parser.add_argument("--interval", type=int, default=60,
-                        help="Seconds between heartbeats")
-    parser.add_argument("--cpu-thresh", type=float, default=1.0,
-                        help="CPU %% below which activity is idle")
-    parser.add_argument("--samples", type=int, default=3,
-                        help="Consecutive idle samples for stall alert")
+    parser.add_argument(
+        "--interval", type=int, default=60, help="Seconds between heartbeats"
+    )
+    parser.add_argument(
+        "--cpu-thresh",
+        type=float,
+        default=1.0,
+        help="CPU %% below which activity is idle",
+    )
+    parser.add_argument(
+        "--samples",
+        type=int,
+        default=3,
+        help="Consecutive idle samples for stall alert",
+    )
     args = parser.parse_args()
 
     if not args.cmd:
@@ -111,15 +119,17 @@ def main():
 
     logging.info(f"Launching: {args.cmd}")
     proc = subprocess.Popen(shlex.split(args.cmd))
-    start_heartbeat(interval=args.interval,
-                    cpu_thresh=args.cpu_thresh,
-                    samples=args.samples,
-                    pid=proc.pid)
+    start_heartbeat(
+        interval=args.interval,
+        cpu_thresh=args.cpu_thresh,
+        samples=args.samples,
+        pid=proc.pid,
+    )
 
     proc.wait()
     logging.info(f"Process exited with code {proc.returncode}")
 
+
 if __name__ == "__main__":
     if len(sys.argv) > 1:
         main()
-

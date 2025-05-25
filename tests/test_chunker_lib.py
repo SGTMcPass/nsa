@@ -1,7 +1,8 @@
 import os
 import sys
+
 # Ensure the tools/ directory is on the import path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import json
 import tempfile
@@ -26,6 +27,7 @@ title: Sample Guide
 Content here.
 """
 
+
 @pytest.fixture
 def tmp_docs(tmp_path):
     # Create a fake docs root with sample files
@@ -48,76 +50,81 @@ def test_load_config(tmp_path, monkeypatch):
 chunk_rules: {unknown: 10}
 overlap_pc: 0.1"""
     )
-    monkeypatch.setenv('HOME', '/home/user')
+    monkeypatch.setenv("HOME", "/home/user")
     cfg = cfg_mod.load_config(str(cfg_file))
-    assert cfg['docs_root'] == '/home/user/project/docs'
-    assert cfg['chunk_rules']['unknown'] == 10
-    assert abs(cfg['overlap_pc'] - 0.1) < 1e-6
+    assert cfg["docs_root"] == "/home/user/project/docs"
+    assert cfg["chunk_rules"]["unknown"] == 10
+    assert abs(cfg["overlap_pc"] - 0.1) < 1e-6
 
 
 def test_safe_read_and_bom(tmp_path):
-    p = tmp_path / 'u8.txt'
-    p.write_bytes(codecs.BOM_UTF16_LE + 'hello'.encode('utf-16-le'))
+    p = tmp_path / "u8.txt"
+    p.write_bytes(codecs.BOM_UTF16_LE + "hello".encode("utf-16-le"))
     text = utils.safe_read(p)
-    assert 'hello' in text
+    assert "hello" in text
 
 
 def test_normalize_href(tmp_path):
-    docs = tmp_path / 'docs'
+    docs = tmp_path / "docs"
     docs.mkdir()
     base = docs
-    (docs / 'index.md').write_text('# root')
+    (docs / "index.md").write_text("# root")
     # Test directory to index.md
-    result = utils.normalize_href('', base, docs)
+    result = utils.normalize_href("", base, docs)
     assert result is None
-    result = utils.normalize_href('index.md', base, docs)
-    assert result.name == 'index.md'
+    result = utils.normalize_href("index.md", base, docs)
+    assert result.name == "index.md"
 
 
 def test_classify(tmp_path):
     # Create fake file with frontmatter
-    f = tmp_path / 'f.md'
+    f = tmp_path / "f.md"
     f.write_text(FRONTMATTER_MD)
-    cfg = {'docs_root': str(tmp_path), 'dir_map': {}}
-    assert utils.classify(f, cfg) == 'howto'
+    cfg = {"docs_root": str(tmp_path), "dir_map": {}}
+    assert utils.classify(f, cfg) == "howto"
     # Filename heuristic
-    f2 = tmp_path / 'test_reference.md'
-    f2.write_text('')
-    assert utils.classify(f2, cfg) == 'reference'
+    f2 = tmp_path / "test_reference.md"
+    f2.write_text("")
+    assert utils.classify(f2, cfg) == "reference"
 
 
 def test_crawl_docs(tmp_docs):
-    files = crawler.crawl_docs(tmp_docs / 'b.md', tmp_docs)
+    files = crawler.crawl_docs(tmp_docs / "b.md", tmp_docs)
     paths = {p.name for p in files}
-    assert {'b.md', 'a.md'} == paths
+    assert {"b.md", "a.md"} == paths
 
 
 def test_extract_lineage_and_split():
-    md = '# H1\n## H2\nParagraph text.'
+    md = "# H1\n## H2\nParagraph text."
     md_parser = MarkdownIt()
     tokens = md_parser.parse(md)
     lineage = splitter.extract_lineage(tokens)
-    assert lineage == 'H1 > H2'
+    assert lineage == "H1 > H2"
     # Test splitting small content
-    chunks = splitter.split_chunks('word ' * 100, lineage, size=10, overlap=2)
-    assert all(chunk.startswith('### H1 > H2') for chunk in chunks)
+    chunks = splitter.split_chunks("word " * 100, lineage, size=10, overlap=2)
+    assert all(chunk.startswith("### H1 > H2") for chunk in chunks)
     # Overlap test: second chunk shares last 2 tokens of first
-    enc = tiktoken.get_encoding('cl100k_base')
-    ids_all = enc.encode('word ' * 100)
+    enc = tiktoken.get_encoding("cl100k_base")
+    ids_all = enc.encode("word " * 100)
     assert len(chunks) > 1
 
 
 def test_manifest(tmp_path):
     # Prepare metadata
     metadata = [
-        {'chunk_id': 'x_00', 'type': 'howto', 'path': 'a.md', 'heading': 'H', 'preview': 'p'}
+        {
+            "chunk_id": "x_00",
+            "type": "howto",
+            "path": "a.md",
+            "heading": "H",
+            "preview": "p",
+        }
     ]
-    out = tmp_path / 'out'
+    out = tmp_path / "out"
     manifest.write_manifest(metadata, out)
     # Validate JSONL
-    lines = (out / 'chunks.jsonl').read_text().splitlines()
-    assert json.loads(lines[0])['chunk_id'] == 'x_00'
+    lines = (out / "chunks.jsonl").read_text().splitlines()
+    assert json.loads(lines[0])["chunk_id"] == "x_00"
     # Validate Markdown manifest
-    m = (out / 'chunks_manifest.md').read_text()
-    assert '| x_00 | howto | a.md | H | p |' in m
-
+    m = (out / "chunks_manifest.md").read_text()
+    assert "| x_00 | howto | a.md | H | p |" in m

@@ -10,12 +10,12 @@ def extract_lineage(tokens) -> str:
     stack: List[str] = []
     lineage: List[str] = []
     for i, tok in enumerate(tokens):
-        if tok.type == 'heading_open':
+        if tok.type == "heading_open":
             lvl = int(tok.tag[1])
             title = tokens[i + 1].content
-            stack = stack[:lvl-1] + [title]
+            stack = stack[: lvl - 1] + [title]
             lineage = stack[:3]
-    return ' > '.join(lineage) if lineage else 'Root'
+    return " > ".join(lineage) if lineage else "Root"
 
 
 def split_chunks(content: str, lineage: str, size: int, overlap: int) -> List[str]:
@@ -23,7 +23,7 @@ def split_chunks(content: str, lineage: str, size: int, overlap: int) -> List[st
     Tokenize `content` and split into windows of `size` with `overlap`.
     Prefix each chunk with '### {lineage}'.
     """
-    encoder = tiktoken.get_encoding('cl100k_base')
+    encoder = tiktoken.get_encoding("cl100k_base")
     ids = encoder.encode(content)
     chunks: List[str] = []
     start = 0

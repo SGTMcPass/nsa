@@ -1,52 +1,72 @@
-# cli.py
 #!/usr/bin/env python3
 """
-CLI entrypoint for chunker_lib.
+tools/chunker_lib/cli.py
+
+Multi-purpose CLI for crawling, chunking, and manifesting Markdown docs.
 """
+import os
 import argparse
 from pathlib import Path
-from markdown_it import MarkdownIt
+
 from .config import load_config
-from .utils import classify
-from .crawler import crawl_docs
-from .splitter import extract_lineage, split_chunks
-from .manifest import write_manifest
+from .core import chunk_documents
+
+
+def run_chunk(args):
+    """Run the chunk_documents pipeline and report the number of files processed."""
+    cfg = load_config(args.config)
+    seed = Path(os.path.expandvars(args.seed)).resolve()
+    output_dir = Path(args.output)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    print(f"⚙️  Starting chunking pipeline...")
+    n = chunk_documents(cfg, seed, output_dir)
+    print(f"🎉  Chunking complete. Processed {n} files. Output in {output_dir}")
+
+
+def run_doc(args):
+    """Placeholder for future full-document generation subcommand."""
+    print("🛠️  The 'doc' subcommand is not yet implemented. Stay tuned!")
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Chunk documentation into token-based segments.'
+        description="Multi-purpose CLI for Trick documentation processing."
     )
-    parser.add_argument('--config', required=True)
-    parser.add_argument('--seed', required=True)
-    parser.add_argument('--output', required=True)
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    # chunk subcommand
+    p_chunk = subparsers.add_parser(
+        "chunk", help="Chunk Markdown docs into pieces for embedding"
+    )
+    p_chunk.add_argument(
+        "--config",
+        required=True,
+        help="YAML config file (docs_root, chunk_rules, overlap_pc, etc.)",
+    )
+    p_chunk.add_argument(
+        "--seed",
+        required=True,
+        help="Seed Markdown file to start crawl (e.g. $TRICK_HOME/docs/index.md)",
+    )
+    p_chunk.add_argument(
+        "--output",
+        required=True,
+        help="Directory to write chunk files, JSONL index, and manifest",
+    )
+    p_chunk.set_defaults(func=run_chunk)
+
+    # doc subcommand
+    p_doc = subparsers.add_parser(
+        "doc", help="Generate a full document from chunks (TBD)"
+    )
+    p_doc.add_argument("--template", help="Path to document template (optional)")
+    p_doc.add_argument("--output", help="Path to write generated document")
+    p_doc.set_defaults(func=run_doc)
+
     args = parser.parse_args()
-    cfg = load_config(args.config)
-    seed = Path(args.seed)
-    docs_root = Path(cfg['docs_root'])
-    output_dir = Path(args.output)
+    args.func(args)
 
-    files = crawl_docs(seed, docs_root)
-    metadata = []
-    for f in files:
-        text = f.read_text(encoding='utf-8', errors='ignore')
-        doc_type = classify(f, cfg)
-        tokens = MarkdownIt().parse(text)
-        lineage = extract_lineage(tokens)
-        size = cfg['chunk_rules'].get(doc_type, cfg['chunk_rules']['unknown'])
-        overlap = int(size * cfg['overlap_pc'])
-        chunks = split_chunks(text, lineage, size, overlap)
-        for idx, chunk in enumerate(chunks):
-            chunk_id = f"{f.stem}_{idx:02d}"
-            preview = chunk[:80].replace('\n', ' ')
-            metadata.append({
-                'chunk_id': chunk_id,
-                'type': doc_type,
-                'path': str(f.relative_to(docs_root)),
-                'heading': lineage,
-                'preview': preview,
-            })
-    write_manifest(metadata, output_dir)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

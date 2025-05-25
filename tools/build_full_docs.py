@@ -32,13 +32,14 @@ import frontmatter
 from markdown_it import MarkdownIt
 
 TRICK = pathlib.Path(os.environ["TRICK_HOME"]).expanduser().resolve()
-SEED  = TRICK / "docs/index.md"
-OUT   = pathlib.Path("docs_full.md")
+SEED = TRICK / "docs/index.md"
+OUT = pathlib.Path("docs_full.md")
 
 IMAGE_EXT = {".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".bmp", ".ico", ".pdf"}
 md = MarkdownIt()
 
 # ───────────────────────────────────────────────────────── safe read
+
 
 def safe_read(p: pathlib.Path) -> str:
     try:
@@ -51,9 +52,11 @@ def safe_read(p: pathlib.Path) -> str:
             return raw.decode("utf-16-be", errors="replace")
         return raw.decode("latin-1", errors="replace")
 
+
 # ───────────────────────────────────────────────────────── crawl
 MD_LINK = re.compile(r"\]\(([^)#]+)\)")
 HREF_RE = re.compile(r'href="([^"]+)"', re.I)
+
 
 def _norm(href: str, base: pathlib.Path) -> pathlib.Path | None:
     if re.match(r"^[a-zA-Z][\w+.-]*://", href) or href.startswith("mailto:"):
@@ -70,36 +73,48 @@ def _norm(href: str, base: pathlib.Path) -> pathlib.Path | None:
     docs_root = TRICK / "docs"
     return t if t.exists() and docs_root in t.parents else None
 
+
 def crawl(seed: pathlib.Path) -> List[pathlib.Path]:
     dq, seen, order = deque([seed.resolve()]), set(), []
     while dq:
         cur = dq.popleft()
         if cur in seen or not cur.exists():
             continue
-        seen.add(cur); order.append(cur)
-        txt = safe_read(cur); base = cur.parent
+        seen.add(cur)
+        order.append(cur)
+        txt = safe_read(cur)
+        base = cur.parent
         for tok in md.parse(txt):
             if tok.type == "image":
                 continue
             if tok.type == "inline":
                 for m in MD_LINK.finditer(tok.content):
                     d = _norm(m.group(1), base)
-                    if d: dq.append(d)
+                    if d:
+                        dq.append(d)
             if tok.type.startswith("html_"):
                 for m in HREF_RE.finditer(tok.content):
                     d = _norm(m.group(1), base)
-                    if d: dq.append(d)
+                    if d:
+                        dq.append(d)
     return order
+
 
 # ───────────────────────────────────────────────────────── main
 
+
 def main():
-    t0=time.time()
+    t0 = time.time()
     files = crawl(SEED)
     print(f"Found {len(files)} markdown files, merging → {OUT} …")
 
     # Build a TOC first so humans can click around.
-    toc_lines = ["# Trick Documentation — Single File Edition", "", "## Table of Contents", ""]
+    toc_lines = [
+        "# Trick Documentation — Single File Edition",
+        "",
+        "## Table of Contents",
+        "",
+    ]
 
     for p in files:
         rel = p.relative_to(TRICK)
@@ -113,15 +128,17 @@ def main():
             rel = p.relative_to(TRICK)
             anchor = str(rel).replace("/", "-").replace(".md", "")
             f.write(f"## FILE: {rel}\n")
-            f.write(f"<a name=\"{anchor}\"></a>\n\n")
+            f.write(f'<a name="{anchor}"></a>\n\n')
             f.write("<!-- BEGIN -->\n\n")
             f.write(safe_read(p))
             f.write("\n\n<!-- END -->\n\n\n")
-    print(f"✓ {OUT} written in {time.time()-t0:.1f}s  (size {OUT.stat().st_size/1024:.0f} KB)")
+    print(
+        f"✓ {OUT} written in {time.time()-t0:.1f}s  (size {OUT.stat().st_size/1024:.0f} KB)"
+    )
+
 
 if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
         sys.exit("Interrupted")
-
