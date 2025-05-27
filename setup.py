@@ -5,8 +5,8 @@ setup(
     version="0.1.0",
     description="CLI tool to chunk Trick documentation into vector-ready pieces",
     author="Your Name",
-    packages=find_packages(where="tools"),
-    package_dir={"": "tools"},
+    packages=find_packages(where="tools"),  # finds 'chunker_lib', 'embedding_lib'
+    package_dir={"": "tools"},  # tells setuptools to look in 'tools/'
     install_requires=[
         "PyYAML",
         "markdown-it-py",
