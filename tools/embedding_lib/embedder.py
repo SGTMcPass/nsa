@@ -3,12 +3,13 @@
 import logging
 from typing import List, Optional
 import torch
+from sentence_transformers import SentenceTransformer
 
 
 class Embedder:
     def __init__(
         self,
-        model_name: str,
+        model_name: "intfloat/e5-base-v2",
         pooling: str = "mean",
         batch_size: int = 32,
         device: Optional[str] = None,
