@@ -6,26 +6,44 @@ Key features:
 - Modular functions for loading, embedding, and saving
 - Robust logging via Python `logging`
 - All errors/warnings surfaced; per-file failures do not stop the batch
-- Outputs canonical, traceable embedding manifest
+- Outputs canonical, traceable embedding manifest with hash and version
 """
 
 import os
 import json
 import yaml
 import logging
+import hashlib
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 
 import numpy as np
 from sentence_transformers import SentenceTransformer
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s | %(levelname)s | %(name)s | %(message)s"
-)
-logger = logging.getLogger("embedding_lib.embedder")
+# === Central Logging Config ===
+MANIFEST_VERSION = "1.0"
 
-logger = logging.getLogger("embedding_lib.embedder")
-logger.setLevel(logging.INFO)
+
+def setup_logging(level=logging.INFO, name="embedding_lib.embedder"):
+    logging.basicConfig(
+        level=level,
+        format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+        force=force,
+    )
+    return logging.getLogger(name)
+
+
+MANIFEST_VERSION = "1.0"
+
+
+def chunk_hash(chunk: dict) -> str:
+    """Compute a SHA256 hash for content + source_file + chunk_index."""
+    base = (
+        (chunk.get("content") or "")
+        + str(chunk.get("source_file") or "")
+        + str(chunk.get("chunk_index") or "")
+    )
+    return hashlib.sha256(base.encode("utf-8")).hexdigest()
 
 
 def load_config(config_path: str) -> Dict[str, Any]:
@@ -62,7 +80,11 @@ def load_chunks(chunks_path: str) -> List[Dict[str, Any]]:
         for line in f:
             if line.strip():
                 try:
-                    chunks.append(json.loads(line))
+                    chunk = json.loads(line)
+                    # skip version header if present
+                    if "manifest_version" in chunk:
+                        continue
+                    chunks.append(chunk)
                 except Exception as e:
                     logger.warning(f"Malformed chunk skipped: {e}")
     logger.info(f"Loaded {len(chunks)} input chunks from {chunks_path}")
@@ -70,13 +92,15 @@ def load_chunks(chunks_path: str) -> List[Dict[str, Any]]:
 
 
 def save_jsonl(data: List[Dict[str, Any]], outpath: str, overwrite: bool = True):
-    """Write list of dicts to JSONL, logs on error."""
+    """Write list of dicts to JSONL, logs on error, includes manifest version."""
     path = Path(outpath)
     if path.exists() and not overwrite:
         logger.warning(f"File {outpath} exists and overwrite=False. Skipping write.")
         return
     try:
         with open(path, "w", encoding="utf-8") as f:
+            # Manifest version as header line
+            f.write(json.dumps({"manifest_version": MANIFEST_VERSION}) + "\n")
             for item in data:
                 f.write(json.dumps(item, ensure_ascii=False) + "\n")
         logger.info(f"Manifest written: {outpath} ({len(data)} embeddings)")
@@ -125,7 +149,6 @@ def embed_documents(
 
     chunks = load_chunks(config["input_chunks"])
     for idx, chunk in enumerate(chunks):
-        # Defensive: ensure required fields are present
         if not chunk.get("content"):
             logger.warning(
                 f"Chunk missing 'content', skipped: {chunk.get('source_file', '')}:{chunk.get('chunk_index', idx)}"
@@ -136,6 +159,7 @@ def embed_documents(
             emb = generate_embedding(model, chunk["content"])
             chunk_out = dict(chunk)  # Copy original metadata
             chunk_out["embedding"] = emb
+            chunk_out["chunk_hash"] = chunk_hash(chunk_out)
             manifest.append(chunk_out)
         except Exception as e:
             logger.warning(
