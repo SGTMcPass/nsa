@@ -1,72 +1,57 @@
-#!/usr/bin/env python3
-"""
-tools/chunker_lib/cli.py
+# chunker_lib/cli.py
 
-Multi-purpose CLI for crawling, chunking, and manifesting Markdown docs.
-"""
-import os
+import sys
 import argparse
 from pathlib import Path
 
-from .config import load_config
-from .core import chunk_documents
-
-
-def run_chunk(args):
-    """Run the chunk_documents pipeline and report the number of files processed."""
-    cfg = load_config(args.config)
-    seed = Path(os.path.expandvars(args.seed)).resolve()
-    output_dir = Path(args.output)
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    print(f"⚙️  Starting chunking pipeline...")
-    n = chunk_documents(cfg, seed, output_dir)
-    print(f"🎉  Chunking complete. Processed {n} files. Output in {output_dir}")
-
-
-def run_doc(args):
-    """Placeholder for future full-document generation subcommand."""
-    print("🛠️  The 'doc' subcommand is not yet implemented. Stay tuned!")
+from chunker_lib.core import chunk_documents, ChunkerCoreError
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Multi-purpose CLI for Trick documentation processing."
-    )
-    subparsers = parser.add_subparsers(dest="command", required=True)
-
-    # chunk subcommand
-    p_chunk = subparsers.add_parser(
-        "chunk", help="Chunk Markdown docs into pieces for embedding"
-    )
-    p_chunk.add_argument(
-        "--config",
+    parser = argparse.ArgumentParser(description="NASA Simulation Agents Chunker CLI")
+    parser.add_argument(
+        "--config_path",
         required=True,
-        help="YAML config file (docs_root, chunk_rules, overlap_pc, etc.)",
+        type=str,
+        help="Path to chunker YAML config file",
     )
-    p_chunk.add_argument(
-        "--seed",
+    parser.add_argument(
+        "--output_dir",
         required=True,
-        help="Seed Markdown file to start crawl (e.g. $TRICK_HOME/docs/index.md)",
+        type=str,
+        help="Directory to write manifest and outputs",
     )
-    p_chunk.add_argument(
-        "--output",
-        required=True,
-        help="Directory to write chunk files, JSONL index, and manifest",
+    parser.add_argument(
+        "--mode",
+        default="word",
+        choices=["word", "paragraph", "heading"],
+        help="Chunking mode (default: word)",
     )
-    p_chunk.set_defaults(func=run_chunk)
-
-    # doc subcommand
-    p_doc = subparsers.add_parser(
-        "doc", help="Generate a full document from chunks (TBD)"
+    parser.add_argument(
+        "--overwrite", action="store_true", help="Overwrite manifest if it exists"
     )
-    p_doc.add_argument("--template", help="Path to document template (optional)")
-    p_doc.add_argument("--output", help="Path to write generated document")
-    p_doc.set_defaults(func=run_doc)
 
     args = parser.parse_args()
-    args.func(args)
 
-
-if __name__ == "__main__":
-    main()
+    try:
+        manifest = chunk_documents(
+            config_path=args.config_path,
+            output_dir=args.output_dir,
+            mode=args.mode,
+            overwrite=args.overwrite,
+        )
+        if not manifest:
+            print(
+                "[cli] WARNING: No chunks produced. Check input files and config.",
+                file=sys.stderr,
+            )
+        else:
+            print(
+                f"[cli] Chunking completed. {len(manifest)} chunks written to {Path(args.output_dir) / 'chunks.jsonl'}"
+            )
+    except ChunkerCoreError as e:
+        print(f"[cli] ERROR: {e}", file=sys.stderr)
+        sys.exit(1)
+    except Exception as e:
+        print(f"[cli] UNEXPECTED ERROR: {e}", file=sys.stderr)
+        sys.exit(2)

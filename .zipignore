@@ -1,0 +1,25 @@
+exclude:
+  - "__pycache__"
+  - "**/.pytest_cache/"
+  - "**/.pytest_cache/**"
+  - ".venv/**"
+  - ".venv/"
+  - ".git/"
+  - ".private/"
+  - "artifacts/"
+  - "node_modules"
+  - "*.log"
+  - "*.swp"
+  - "*.pyc"
+  - "*.pyo"
+  - "*.zip"
+  - ".git/**"
+  - ".mypy_cache/"
+  - ".mypy_cache/**"
+  - ".DS_Store"
+  - ".idea/"
+
+include:
+  # Optional: leave blank or specify, e.g.:
+  # - "tools"
+  # - "tests"

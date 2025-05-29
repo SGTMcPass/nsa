@@ -1,58 +1,113 @@
-import pytest
-import yaml
-from pathlib import Path
-
-from chunker_lib.core import chunk_documents
-
-
-def test_chunk_documents_creates_expected_files(tmp_path):
-    # 1. Arrange: create a small docs tree
-    docs_root = tmp_path / "docs"
-    docs_root.mkdir()
-
-    # Sample Markdown file with guide layout -> classified as howto
-    intro_md = docs_root / "intro.md"
-    intro_md.write_text(
-        """
----
-layout: guide
-title: Introduction
----
-# Intro
-This is the introduction.
+# tests/test_core.py
 """
-    )
+Test Suite: Bulletproof Orchestration Tests for core.py
 
-    # 2. Create minimal config dict
-    cfg = {
-        "docs_root": str(docs_root),
-        "chunk_rules": {"howto": 10, "unknown": 10},
-        "overlap_pc": 0.1,
-        "dir_map": {"docs": "howto"},
-        "image_ext": [],
+Covers: config loading, file crawling, chunking, manifest writing, logging, and summary output.
+"""
+
+import pytest
+from pathlib import Path
+import shutil
+import yaml
+
+from chunker_lib import core  # Adjust import path as needed
+
+
+@pytest.fixture
+def sample_docs(tmp_path):
+    """Create a test docs tree with various edge cases."""
+    docs_dir = tmp_path / "docs"
+    docs_dir.mkdir()
+
+    # Valid Markdown
+    valid_md = docs_dir / "valid.md"
+    valid_md.write_text("# Valid Heading\nSome valid content.")
+
+    # Empty Markdown
+    empty_md = docs_dir / "empty.md"
+    empty_md.write_text("")
+
+    # Malformed Markdown (simulate with nonsense)
+    malformed_md = docs_dir / "malformed.md"
+    malformed_md.write_text("\x00\x01\x02")
+
+    # Non-markdown file
+    not_md = docs_dir / "not_a_markdown.txt"
+    not_md.write_text("This should be skipped.")
+
+    return docs_dir
+
+
+@pytest.fixture
+def sample_config(tmp_path, sample_docs):
+    """Generate a valid config.yaml with minimal rules."""
+    config = {
+        "docs_root": str(sample_docs),
+        "dir_map": {"": "howto"},
+        "chunk_rules": {"howto": 100},
+        "overlap_pc": 0.0,
     }
+    config_path = tmp_path / "config.yaml"
+    with open(config_path, "w") as f:
+        yaml.dump(config, f)
+    return config_path
 
-    # 3. Act: run chunk_documents
+
+def test_pipeline_happy_path(tmp_path, sample_config):
+    """Test: All valid .md files processed, manifest written, summary/output as expected."""
     output_dir = tmp_path / "output"
     output_dir.mkdir()
-    processed_files = chunk_documents(cfg, intro_md, output_dir)
+    result = core.run_pipeline(
+        config_path=str(sample_config),
+        output_dir=str(output_dir),
+        mode="heading",
+        overwrite=True,
+    )
+    manifest_file = output_dir / "chunks.jsonl"
+    assert manifest_file.exists()
+    # Optionally: Load manifest and assert correct chunk structure/content
+    with open(manifest_file) as f:
+        lines = f.readlines()
+    assert any("Valid Heading" in line for line in lines)
 
-    # 4. Assert: one file processed
-    assert processed_files == 1
 
-    # Manifest and JSONL index should be created
-    manifest = output_dir / "chunks_manifest.md"
-    jsonl = output_dir / "chunks.jsonl"
-    assert manifest.exists(), "chunks_manifest.md should exist"
-    assert jsonl.exists(), "chunks.jsonl should exist"
+def test_pipeline_skips_and_logs(tmp_path, sample_config, caplog):
+    """Test: Non-md and empty/malformed files are skipped/warned, but pipeline completes."""
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+    core.run_pipeline(
+        config_path=str(sample_config),
+        output_dir=str(output_dir),
+        mode="heading",
+        overwrite=True,
+    )
+    logs = caplog.text
+    assert "Skipped" in logs or "Warning" in logs
+    assert "empty.md" in logs
+    assert "malformed.md" in logs
+    assert "not_a_markdown.txt" in logs
 
-    # The howto subdirectory should contain at least one chunk file
-    howto_dir = output_dir / "howto"
-    assert howto_dir.exists(), "howto directory should exist"
-    chunk_files = list(howto_dir.glob("intro_*.md"))
-    assert chunk_files, "Expected at least one chunk file for intro.md"
 
-    # Manifest should list the chunk_id and preview of the intro chunk
-    manifest_text = manifest.read_text()
-    assert "intro_00" in manifest_text
-    assert "Introduction" in manifest_text
+def test_pipeline_manifest_canonical(tmp_path, sample_config):
+    """Test: Manifest output is canonical (one chunk per line, with all required metadata)."""
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+    core.run_pipeline(
+        config_path=str(sample_config),
+        output_dir=str(output_dir),
+        mode="heading",
+        overwrite=True,
+    )
+    manifest_file = output_dir / "chunks.jsonl"
+    with open(manifest_file) as f:
+        for line in f:
+            chunk = yaml.safe_load(line)  # or json.loads(line)
+            assert "content" in chunk
+            assert "source_file" in chunk
+            assert "category" in chunk
+
+
+# Add more tests as needed:
+# - config loading errors
+# - manifest write errors (simulate permissions issues)
+# - pipeline with missing docs_root or empty config

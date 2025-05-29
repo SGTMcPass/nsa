@@ -1,74 +1,160 @@
-# tools/embedding_lib/embedder.py
+"""
+embedder.py — Embedding pipeline core for NASA Simulation Agents.
+Implements the Stark Protocol: Modular, resilient, CLI-ready.
 
+Key features:
+- Modular functions for loading, embedding, and saving
+- Robust logging via Python `logging`
+- All errors/warnings surfaced; per-file failures do not stop the batch
+- Outputs canonical, traceable embedding manifest
+"""
+
+import os
+import json
+import yaml
 import logging
-from typing import List, Optional
-import torch
+from pathlib import Path
+from typing import List, Dict, Any, Optional
+
+import numpy as np
 from sentence_transformers import SentenceTransformer
 
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s | %(levelname)s | %(name)s | %(message)s"
+)
+logger = logging.getLogger("embedding_lib.embedder")
 
-class Embedder:
-    def __init__(
-        self,
-        model_name: "intfloat/e5-base-v2",
-        pooling: str = "mean",
-        batch_size: int = 32,
-        device: Optional[str] = None,
-        backend: Optional[object] = None,
-    ):
-        """
-        Initialize the Embedder.
-        Args:
-            model_name (str): HuggingFace model name or path.
-            pooling (str): Pooling strategy ('mean', 'max', etc.).
-            batch_size (int): Batch size for encoding.
-            device (str, optional): 'cpu', 'cuda', 'auto', or None for auto-detect.
-            backend (object, optional): Pluggable backend adapter (for future models).
-        """
-        self.logger = logging.getLogger(__name__)
-        logging.basicConfig(level=logging.INFO)
-        self.model_name = model_name
-        self.pooling = pooling
-        self.batch_size = batch_size
+logger = logging.getLogger("embedding_lib.embedder")
+logger.setLevel(logging.INFO)
 
-        # Device selection: if not specified, auto-detect CUDA
-        if device is None or device == "auto":
-            self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        else:
-            self.device = device
-        self.logger.info(f"Using device: {self.device}")
 
-        # Model backend: default to SentenceTransformers if not provided
-        if backend is not None:
-            self.backend = backend
-            self.logger.info(f"Using custom backend for {model_name}")
-        else:
-            from sentence_transformers import SentenceTransformer
+def load_config(config_path: str) -> Dict[str, Any]:
+    """Load YAML config with environment variable expansion and validation."""
+    path = Path(os.path.expandvars(config_path))
+    if not path.exists():
+        logger.error(f"Config file does not exist: {config_path}")
+        raise FileNotFoundError(f"Config file does not exist: {config_path}")
+    with open(path, "r", encoding="utf-8") as f:
+        config = yaml.safe_load(f)
+    # Expand env vars in string fields
+    for k, v in config.items():
+        if isinstance(v, str):
+            config[k] = os.path.expandvars(v)
+    if "input_chunks" not in config or not config["input_chunks"]:
+        logger.error("Config missing input_chunks path.")
+        raise ValueError("Config missing input_chunks path.")
+    if "embedding_model" not in config or not config["embedding_model"]:
+        logger.warning("No embedding_model specified. Using 'all-MiniLM-L6-v2'.")
+        config["embedding_model"] = "all-MiniLM-L6-v2"
+    if "output_name" not in config or not config["output_name"]:
+        config["output_name"] = "embeddings.jsonl"
+    return config
 
-            # Loads the model to the specified device
-            self.backend = SentenceTransformer(model_name, device=self.device)
-            self.logger.info(f"Loaded model: {model_name}")
 
-    def encode_chunks(
-        self, chunks: List[str], prefix: Optional[str] = "passage:"
-    ) -> List[List[float]]:
-        """
-        Embed a list of text chunks.
-        Args:
-            chunks (List[str]): List of input strings (docs/chunks).
-            prefix (str, optional): Prefix for optimal model usage (e5 expects 'passage:' or 'query:').
-        Returns:
-            List[List[float]]: List of embedding vectors.
-        """
-        # Add prefix to each chunk if required by the model (e5 best practice)
-        inputs = [f"{prefix} {chunk}" if prefix else chunk for chunk in chunks]
-        self.logger.info(
-            f"Encoding {len(inputs)} chunks (batch size: {self.batch_size})..."
-        )
-        # Batch encode all inputs (efficient for CUDA)
-        embeddings = self.backend.encode(
-            inputs, batch_size=self.batch_size, convert_to_numpy=True
-        )
-        self.logger.info(f"Generated embeddings with shape {embeddings.shape}")
-        return embeddings
+def load_chunks(chunks_path: str) -> List[Dict[str, Any]]:
+    """Load input chunks from JSONL file."""
+    chunks = []
+    path = Path(chunks_path)
+    if not path.exists():
+        logger.error(f"Chunks file does not exist: {chunks_path}")
+        raise FileNotFoundError(f"Chunks file does not exist: {chunks_path}")
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            if line.strip():
+                try:
+                    chunks.append(json.loads(line))
+                except Exception as e:
+                    logger.warning(f"Malformed chunk skipped: {e}")
+    logger.info(f"Loaded {len(chunks)} input chunks from {chunks_path}")
+    return chunks
 
-    # Additional methods for saving embeddings, changing pooling, etc., can be added here
+
+def save_jsonl(data: List[Dict[str, Any]], outpath: str, overwrite: bool = True):
+    """Write list of dicts to JSONL, logs on error."""
+    path = Path(outpath)
+    if path.exists() and not overwrite:
+        logger.warning(f"File {outpath} exists and overwrite=False. Skipping write.")
+        return
+    try:
+        with open(path, "w", encoding="utf-8") as f:
+            for item in data:
+                f.write(json.dumps(item, ensure_ascii=False) + "\n")
+        logger.info(f"Manifest written: {outpath} ({len(data)} embeddings)")
+    except Exception as e:
+        logger.error(f"Could not write JSONL to {outpath}: {e}")
+
+
+def generate_embedding(model, text: str) -> List[float]:
+    """Generate embedding for a single chunk of text."""
+    try:
+        emb = model.encode(text)
+        return emb.tolist() if isinstance(emb, np.ndarray) else list(emb)
+    except Exception as e:
+        logger.warning(f"Embedding failed for text: {e}")
+        raise
+
+
+def embed_documents(
+    config_path: str,
+    output_dir: str,
+    overwrite: bool = True,
+) -> Dict[str, Any]:
+    """
+    Orchestrate the full embedding pipeline.
+    Implements the Stark Protocol.
+    Returns summary dict: {manifest, skipped_chunks, total_embeddings}
+    """
+    logger.info(f"Loading config from: {config_path}")
+    try:
+        config = load_config(config_path)
+    except Exception as e:
+        logger.error(f"Failed to load config: {e}")
+        raise
+
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    manifest = []
+    skipped_chunks = []
+
+    logger.info(f"Loading embedding model: {config['embedding_model']}")
+    try:
+        model = SentenceTransformer(config["embedding_model"])
+    except Exception as e:
+        logger.error(f"Failed to load embedding model: {e}")
+        raise
+
+    chunks = load_chunks(config["input_chunks"])
+    for idx, chunk in enumerate(chunks):
+        # Defensive: ensure required fields are present
+        if not chunk.get("content"):
+            logger.warning(
+                f"Chunk missing 'content', skipped: {chunk.get('source_file', '')}:{chunk.get('chunk_index', idx)}"
+            )
+            skipped_chunks.append(chunk.get("source_file", "unknown"))
+            continue
+        try:
+            emb = generate_embedding(model, chunk["content"])
+            chunk_out = dict(chunk)  # Copy original metadata
+            chunk_out["embedding"] = emb
+            manifest.append(chunk_out)
+        except Exception as e:
+            logger.warning(
+                f"Embedding failed for {chunk.get('source_file', '')}:{chunk.get('chunk_index', idx)}: {e}"
+            )
+            skipped_chunks.append(chunk.get("source_file", "unknown"))
+            continue
+
+    manifest_path = output_dir / config["output_name"]
+    if manifest:
+        save_jsonl(manifest, manifest_path, overwrite=overwrite)
+    else:
+        logger.warning("No embeddings to write.")
+
+    logger.info(
+        f"Embedding summary: {len(manifest)} chunks embedded, {len(skipped_chunks)} skipped."
+    )
+    return {
+        "manifest": manifest,
+        "skipped_chunks": skipped_chunks,
+        "total_embeddings": len(manifest),
+    }

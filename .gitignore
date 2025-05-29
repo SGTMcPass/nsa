@@ -6,6 +6,7 @@ __pycache__/
 
 # 🔄 Virtual environments
 .venv/
+.private/
 env/
 venv/
 

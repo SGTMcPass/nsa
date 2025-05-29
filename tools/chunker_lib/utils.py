@@ -1,114 +1,102 @@
-# utils.py
-from pathlib import Path
-import codecs
-import re
+"""
+chunker_lib.utils
+Reusable utility functions for chunking workflows.
+Warns on argument type mismatch. Robust, reusable, error-safe.
+"""
+
 import os
-from typing import Dict
-from frontmatter import load as load_frontmatter
+import re
+import json
+import warnings
+from pathlib import Path
+from typing import List, Any, Optional, Union
 
 
-def safe_read(path: Path) -> str:
+class ChunkerUtilsError(Exception):
+    """Custom exception for all chunker utility errors."""
+
+
+def read_file(path: Union[str, Path]) -> str:
     """
-    Read a file at `path` into a string, handling UTF-8/16 BOMs and fallback encodings.
+    Read text from a file at `path`.
+    Warns if the path is not a str or Path.
     """
+    if not isinstance(path, (str, Path)):
+        warnings.warn(
+            f"[chunker_lib.utils] 'path' is type {type(path)}, expected str or Path.",
+            stacklevel=2,
+        )
     try:
-        return path.read_text(encoding="utf-8")
-    except UnicodeDecodeError:
-        raw = path.read_bytes()
-        if raw.startswith(codecs.BOM_UTF16_LE):
-            return raw.decode("utf-16-le", errors="replace")
-        if raw.startswith(codecs.BOM_UTF16_BE):
-            return raw.decode("utf-16-be", errors="replace")
-        return raw.decode("latin-1", errors="replace")
+        with open(path, "r", encoding="utf-8") as f:
+            return f.read()
+    except Exception as e:
+        raise ChunkerUtilsError(f"Failed to read file {path}: {e}")
 
 
-def normalize_href(href: str, base: Path, docs_root: Path) -> Path | None:
+def write_file(path: Union[str, Path], data: str) -> None:
     """
-    Normalize a Markdown or HTML link `href` to a local markdown file under `docs_root`.
-    Returns a Path if valid, otherwise None.
+    Write text to a file at `path`.
+    Warns if the path is not a str or Path.
     """
-    # Skip external URLs and mailto links
-    if re.match(r"^[a-zA-Z]+://", href) or href.startswith("mailto:"):
-        return None
-
-    # Strip anchors and query params
-    clean = href.split("#", 1)[0].split("?", 1)[0].strip()
-    if not clean:
-        return None
-
-    # Reject suspicious or non-path links
-    if not re.match(r"^[\w\-\./]+$", clean):
-        return None
-
-    # Skip common non-markdown file extensions
-    if Path(clean).suffix.lower() in {
-        ".png",
-        ".jpg",
-        ".jpeg",
-        ".gif",
-        ".svg",
-        ".webp",
-        ".bmp",
-        ".ico",
-        ".pdf",
-    }:
-        return None
-
-    # Now resolve and check under docs_root
-    target = (base / clean).resolve()
-    if target.is_dir():
-        target = target / "index.md"
-    if target.suffix == "":
-        target = target.with_suffix(".md")
-
+    if not isinstance(path, (str, Path)):
+        warnings.warn(
+            f"[chunker_lib.utils] 'path' is type {type(path)}, expected str or Path.",
+            stacklevel=2,
+        )
     try:
-        if target.is_file() and target.resolve().is_relative_to(
-            Path(docs_root).resolve()
-        ):
-            return target
-    except AttributeError:
-        if Path(docs_root).resolve() in target.parents:
-            return target
-
-    return None
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(data)
+    except Exception as e:
+        raise ChunkerUtilsError(f"Failed to write file {path}: {e}")
 
 
-def classify(path: Path, cfg: Dict) -> str:
+def find_markdown_files(root: Union[str, Path]) -> List[str]:
     """
-    Determine the document type for `path` based on:
-      1. Front-matter 'layout' or 'type'
-      2. Longest-prefix match in cfg['dir_map']
-      3. Filename regex patterns
-      4. Default to 'unknown'
+    Recursively find all `.md` files under a directory.
+    Warns if the root is not a str or Path.
     """
-    # 1. Front-matter
+    if not isinstance(root, (str, Path)):
+        warnings.warn(
+            f"[chunker_lib.utils] 'root' is type {type(root)}, expected str or Path.",
+            stacklevel=2,
+        )
+    md_files = []
+    for dirpath, _, filenames in os.walk(root):
+        for fname in filenames:
+            if fname.endswith(".md"):
+                md_files.append(os.path.join(dirpath, fname))
+    return md_files
+
+
+def load_json(path: Union[str, Path]) -> Any:
+    """
+    Load JSON from a file at `path`.
+    Warns if the path is not a str or Path.
+    """
+    if not isinstance(path, (str, Path)):
+        warnings.warn(
+            f"[chunker_lib.utils] 'path' is type {type(path)}, expected str or Path.",
+            stacklevel=2,
+        )
     try:
-        post = load_frontmatter(path)
-        layout = (post.get("layout") or post.get("type") or "").lower()
-        if layout in {"howto", "guide"}:
-            return "howto"
-        if layout == "reference":
-            return "reference"
-        if layout == "faq":
-            return "troubleshoot"
-    except Exception:
-        pass
-    # 2. Directory mapping
-    rel = str(path.relative_to(cfg["docs_root"])).replace("\\", "/").lower()
-    for prefix, kind in cfg.get("dir_map", {}).items():
-        if rel.startswith(prefix.lower()):
-            return kind
-    # 3. Filename-based heuristics
-    name = path.name.lower()
-    if any(tok in name for tok in ("howto", "tutorial", "guide")):
-        return "howto"
-    if any(
-        tok in name for tok in ("overview", "introduction", "architecture", "concept")
-    ):
-        return "concept"
-    if any(tok in name for tok in ("api", "reference", "class_", "web")):
-        return "reference"
-    if any(tok in name for tok in ("faq", "trouble", "checkpoint")):
-        return "troubleshoot"
-    # 4. Default
-    return "unknown"
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        raise ChunkerUtilsError(f"Failed to load JSON file {path}: {e}")
+
+
+def save_json(path: Union[str, Path], obj: Any) -> None:
+    """
+    Save JSON to a file at `path`.
+    Warns if the path is not a str or Path.
+    """
+    if not isinstance(path, (str, Path)):
+        warnings.warn(
+            f"[chunker_lib.utils] 'path' is type {type(path)}, expected str or Path.",
+            stacklevel=2,
+        )
+    try:
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(obj, f, indent=2)
+    except Exception as e:
+        raise ChunkerUtilsError(f"Failed to save JSON file {path}: {e}")
