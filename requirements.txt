@@ -1,29 +1,54 @@
-# === Core project tools ===
+# === Core Dependencies ===
 PyYAML>=6.0
 jsonschema>=4.17.0
+numpy>=1.21.0,<2.0.0
+pandas>=1.3.0,<3.0.0
+python-dateutil>=2.8.2,<3.0.0
+python-dotenv>=0.19.0,<2.0.0
+loguru>=0.6.0,<1.0.0
+click>=8.0.0,<9.0.0
+rich>=13.0.0,<14.0.0
 
-# === Pre-commit framework ===
-pre-commit>=3.4.0
+# === Document Processing ===
+markdown-it-py>=3.0.0,<4.0.0        # Markdown parsing
+python-frontmatter>=1.0.0,<2.0.0    # Frontmatter extraction
+tiktoken>=0.6.0,<1.0.0              # Token counting
 
-# === Linting / formatting (optional tools) ===
-black==22.3.0  # Safe for Python 3.6; use 24.x if on 3.8+
-yamllint>=1.33.0
+# === Embeddings & Vector Stores ===
+openai>=1.14.0,<2.0.0               # OpenAI API client
+sentence-transformers>=2.2.2,<3.0.0  # Local embeddings
+faiss-cpu>=1.7.4,<2.0.0             # Vector similarity search
 
-# === Optional enhancement (e.g. rich output, argparse help) ===
-rich>=13.0.0
+# === API & Web ===
+fastapi>=0.68.0,<1.0.0
+uvicorn>=0.15.0,<1.0.0
+pydantic>=1.8.0,<2.0.0
+requests>=2.26.0,<3.0.0
 
-# ───────── core parsing / chunking ─────────────────────────
-markdown-it-py>=3.0.0        # import markdown_it
-python-frontmatter>=1.0.0    # import frontmatter
-tiktoken>=0.6.0              # OpenAI token-counter
-PyYAML>=6.0                  # optional YAML overrides for rules / maps
+# === Database ===
+psycopg2-binary>=2.9.0,<3.0.0       # PostgreSQL adapter
+pgvector>=0.2.4,<1.0.0              # Vector similarity for PostgreSQL
 
-# ───────── OpenAI + embeddings ────────────────────────────
-openai>=1.14.0               # chat & embedding endpoints
+# === Testing ===
+pytest>=7.0.0,<8.0.0
+pytest-cov>=4.0.0,<5.0.0
+pytest-mock>=3.10.0,<4.0.0
+coverage>=7.0.0,<8.0.0
 
-# ───────── Postgres + pgvector client stack ───────────────
-psycopg2-binary>=2.9         # Postgres driver (system-lib free)
-pgvector>=0.2.4              # adds the <-> operator + helpers
+# === Linting & Formatting ===
+black>=24.0.0,<25.0.0
+isort>=5.10.0,<6.0.0
+mypy>=1.0.0,<2.0.0
+ruff>=0.3.0,<0.4.0
+flake8>=6.0.0,<7.0.0
+pre-commit>=3.4.0,<4.0.0
+yamllint>=1.33.0,<2.0.0
 
-# ───────── niceties / CLI UX ──────────────────────────────
-tqdm>=4.66                   # progress bars for embedding scripts
+# === Documentation ===
+sphinx>=7.0.0,<8.0.0
+sphinx-rtd-theme>=1.2.0,<2.0.0
+sphinxcontrib-jquery>=4.1,<5.0
+
+# === Utilities ===
+tqdm>=4.66.0,<5.0.0                 # Progress bars
+fsspec[http]<=2024.3.1               # Explicitly set to avoid conflicts

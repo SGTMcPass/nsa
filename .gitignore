@@ -2,37 +2,80 @@
 __pycache__/
 *.py[cod]
 *.egg-info/
-*.log
+*.egg
+*.pyc
+*.pyd
+*.pyo
+*.so
+*.so.*
+.python-version
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
 # 🔄 Virtual environments
 .venv/
 .private/
 env/
 venv/
+ENV/
 
 # 🛠 Build & editor tools
 .DS_Store
 .idea/
 .vscode/
 *.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+.ropeproject/
 
 # 📦 Package managers
 pip-wheel-metadata/
-*.egg
 *.whl
+Pipfile
+Pipfile.lock
+poetry.lock
 
 # 🧪 Test outputs
 .coverage
+.coverage.*
+coverage.xml
+*.cover
+*.py,cover
 htmlcov/
-dist/
+.pytest_cache/
+.mypy_cache/
+.tox/
+nox/
+
+# 📦 Distribution / packaging
+.Python
 build/
-.cache/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
 # 📝 Temp & generated content
 *.tmp
 *.bak
 *.orig
 *.out
+*.log
 
 # 🚫 Markdown previews or exports
 *.pdf
@@ -41,7 +84,72 @@ build/
 # 🔐 Secrets (just in case)
 .env
 .env.*
+!.env.example
+secrets.yaml
+secrets.yml
 
 # 🧠 AI prompt exports (if generated)
 exported_prompt.*
 output/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Local development
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Documentation
+docs/_build/
+
+# IDEs and Editors
+.ropeproject
+.project
+.pydevproject
+.settings/
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# System Files
+.DS_Store
+Thumbs.db
+
+# Project specific
+.private/
+
+# Build and release files
+/build/
+/dist/
+*.egg-info/
+
+# Testing
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Local development
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
