@@ -7,15 +7,16 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "~3.11"
-# We will add dependencies below using the 'poetry add' command
 stable-baselines3 = {extras = ["extra"], version = "^2.6.0"}
 board-game-env-lib = {path = "../board_game_lib", develop = true}
 pyyaml = "^6.0.2"
 pydantic = "^2.11.7"
+torch = {version = ">=2.3.0", source = "pytorch_cpu"}
+gradio = "^5.34.2"
 
 [[tool.poetry.source]]
-name = "pytorch_cu118"
-url = "https://download.pytorch.org/whl/cu118"
+name = "pytorch_cpu"
+url = "https://download.pytorch.org/whl/cpu"
 priority = "explicit"
 
 [build-system]

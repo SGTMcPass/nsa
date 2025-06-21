@@ -30,6 +30,8 @@ class RunnerConfig(BaseModel):
         description="Total number of timesteps to train for",
         gt=0
     )
+    show_progress_bar: Optional[bool] = Field(True, description="Show TQDM progress bar during training.")
+    show_metrics_table: Optional[bool] = Field(True, description="Show table of metrics in console.")
     hyperparams: Dict[str, Any] = Field(
         default_factory=dict,
         description="Hyperparameters specific to the backend"

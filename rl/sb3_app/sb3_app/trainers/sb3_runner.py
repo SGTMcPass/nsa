@@ -1,4 +1,4 @@
-# rl_project/trainers/sb3_runner.py
+# sb3_app/trainers/sb3_runner.py
 
 from typing import Any, Type, Dict
 import os
@@ -75,23 +75,24 @@ class StableBaselines3_Runner(IRunner):
         return algo_class(
             policy=self.config.runner.policy,
             env=self.env,
-            verbose=1,
+            verbose=1 if self.config.runner.show_metrics_table else 0,
             tensorboard_log=self.tensorboard_log_path, # From our previous fix
             **model_kwargs  # Unpack the clean, validated dictionary
         )
 
-
-    # --- MODIFIED: The train() method ---
     def train(self) -> None:
-        """Executes the main training loop using the SB3 .learn() method."""
+        """Executes the main training loop and saves the model upon completion."""
         self.logger.log(f"Starting training for {self.config.runner.total_timesteps} timesteps.")
-        
+
         # --- MODIFIED: Conditionally create and use the RenderCallback ---
         active_callbacks = []
         # Check the config to see if rendering is enabled
         if self.config.environment.params.get("render_mode") == "human":
             # We import here to avoid a pygame dependency if rendering is not used
-            from rl_project.utils.callbacks import RenderCallback
+            # NOTE: You have an import for RenderCallback at the top of the file,
+            # which is fine, but stable_baselines3's CallbackList should be imported here.
+            from stable_baselines3.common.callbacks import CallbackList
+            from rl_project.utils.callback import RenderCallback
             active_callbacks.append(RenderCallback())
 
         try:
@@ -99,12 +100,22 @@ class StableBaselines3_Runner(IRunner):
                 total_timesteps=self.config.runner.total_timesteps,
                 # Pass the list of callbacks (or None if empty)
                 callback=CallbackList(active_callbacks) if active_callbacks else None,
-                progress_bar=True
+                progress_bar=self.config.runner.show_progress_bar
             )
             self.logger.log("Training completed successfully.")
+
+            # --- FIX: ADD THIS SECTION TO SAVE THE MODEL ---
+            self.logger.log("Saving final model...")
+            # We construct a path inside the unique TensorBoard log directory
+            model_save_path = os.path.join(self.tensorboard_log_path, "final_model")
+            self.save(model_save_path)
+            # -----------------------------------------------
+
         except Exception as e:
             self.logger.log(f"An error occurred during training: {e}")
             raise
+
+
 
     def predict(self, observation: Any, deterministic: bool = True) -> Any:
         """Performs inference using the trained SB3 model."""

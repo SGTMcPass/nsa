@@ -2,12 +2,31 @@
 
 project_name: "BoardGame_SB3_Full"
 
+runner:
+  backend: "sb3"
+  policy: "MultiInputPolicy"
+  total_timesteps: 10000000
+  show_progress_bar: true
+  show_metrics_table: false
+  hyperparams:
+    algorithm: "PPO"
+    params:
+      device: "cpu"
+      n_steps: 2048
+      batch_size: 64
+      n_epochs: 10
+      gamma: 0.99
+      gae_lambda: 0.95
+      ent_coef: 0.01
+      vf_coef: 0.5
+      learning_rate: 0.0003
+
 environment:
   factory_class: "rl_project.environments.board_game_factory.BoardGameFactory"
   params:
     #render_mode: "human"
     render_mode: "None"
-    goal_points: 100000
+    goal_points: 110000
     
     initial_resources:
       initial_turns: 200
@@ -151,19 +170,3 @@ environment:
       - 5
       - 5
 
-runner:
-  backend: "sb3"
-  policy: "MultiInputPolicy"
-  total_timesteps: 100000
-  hyperparams:
-    algorithm: "PPO"
-    params:
-      device: "cpu"
-      n_steps: 2048
-      batch_size: 64
-      n_epochs: 10
-      gamma: 0.99
-      gae_lambda: 0.95
-      ent_coef: 0.01
-      vf_coef: 0.5
-      learning_rate: 0.0003

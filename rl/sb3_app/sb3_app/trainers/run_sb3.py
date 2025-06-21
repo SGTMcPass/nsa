@@ -47,6 +47,7 @@ def main():
     logger = ConsoleLogger()
     logger.log(f"Project: {config.project_name}")
     logger.log(f"Using backend: {config.runner.backend}")
+    logger.log(f"Verifying device from config: '{config.runner.hyperparams.get('params', {}).get('device', 'Not Found')}'")
 
     env_factory_class = dynamic_import(config.environment.factory_class)
     env_factory: IEnvironmentFactory = env_factory_class()
