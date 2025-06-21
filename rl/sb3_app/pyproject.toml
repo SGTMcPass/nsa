@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "sb3-app"
+version = "0.1.0"
+description = "SB3 runner for the board game RL project"
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "~3.11"
+# We will add dependencies below using the 'poetry add' command
+stable-baselines3 = {extras = ["extra"], version = "^2.6.0"}
+board-game-env-lib = {path = "../board_game_lib", develop = true}
+pyyaml = "^6.0.2"
+pydantic = "^2.11.7"
+
+[[tool.poetry.source]]
+name = "pytorch_cu118"
+url = "https://download.pytorch.org/whl/cu118"
+priority = "explicit"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

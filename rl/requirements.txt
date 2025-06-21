@@ -1,0 +1,16 @@
+# rl/requirements.txt
+
+# Core numerical and deep learning backend
+numpy==1.26.4
+torch==2.3.1 --index-url https://download.pytorch.org/whl/cu121
+# Reinforcement Learning & Environment
+gymnasium==0.29.1
+stable-baselines3==2.3.0
+ray[rllib]==2.10.0
+
+# Configuration & Utilities
+pydantic==2.7.4
+pyyaml==6.0.1
+
+# Testing
+pytest==8.2.2
