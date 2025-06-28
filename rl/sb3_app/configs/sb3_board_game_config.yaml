@@ -1,31 +1,51 @@
-# rl/configs/sb3_config.yaml
-
-project_name: "BoardGame_SB3_Full"
+project_name: "BoardGame_SB3_Base"
 
 runner:
+  num_envs: 6           # Matches your 6 physical CPU cores for optimal data collection.
   backend: "sb3"
-  policy: "MultiInputPolicy"
+  policy: "MultiInputPolicy" # This is ignored by the runner, which now uses the imported class.
   total_timesteps: 10000000
   show_progress_bar: true
   show_metrics_table: false
+  tensorboard_log: "./logs/sb3_tensorboard/" # Base directory for logs.
+  
+  # --- Feature Flags ---
+  anneal_lr: true
+  anneal_entropy: true
+  # To use pre-training, provide the path to a saved model.zip file.
+  # pretrained_model_path: "./logs/sb3_tensorboard/Ideal_Env_Run_1/final_model.zip"
+  pretrained_model_path: null
+
+  # --- CORRECTED INDENTATION: hyperparams is now inside runner ---
   hyperparams:
     algorithm: "PPO"
+    
+    policy_kwargs:
+      # --- Correctly structured network architecture ---
+      # This will now create a large network, increasing GPU memory and utilization.
+      net_arch:
+        pi: [2048, 1024, 512]
+        vf: [2048, 1024, 512]
+        
     params:
-      device: "cpu"
-      n_steps: 2048
-      batch_size: 64
-      n_epochs: 10
-      gamma: 0.99
+      device: "cuda"
+      # --- Aggressive parameters to keep the GPU busy ---
+      n_steps: 4096
+      batch_size: 4096
+      n_epochs: 30
+      
+      # --- Standard PPO parameters ---
+      gamma: 0.999
       gae_lambda: 0.95
-      ent_coef: 0.01
+      ent_coef: 0.01      # This is the initial value for annealing.
       vf_coef: 0.5
-      learning_rate: 0.0003
+      learning_rate: 0.0003 # This is the initial value for annealing.
 
+# --- Environment specific configuration from your file ---
 environment:
   factory_class: "rl_project.environments.board_game_factory.BoardGameFactory"
   params:
-    #render_mode: "human"
-    render_mode: "None"
+    render_mode: "None" # Set to "human" to watch the agent play.
     goal_points: 110000
     
     initial_resources:
@@ -37,7 +57,7 @@ environment:
       obsidian: 0
       otta: 0
       gem_purchases_done: 0
-      free_turns: 0 # Should always start at 0
+      free_turns: 0
 
     observed_resources:
       - "points"
@@ -50,6 +70,7 @@ environment:
 
     reward_weights:
       points: 1.0
+      turn_penalty: 100.0 # <--- CORRECTED TYPO
       free_turns: 0.0
       gems: 0.0
       gold: 0.0
@@ -84,16 +105,11 @@ environment:
       - type: "FateWheelTile"
         params:
           outcomes:
-            - reward: { points: 500 }
-              chance: 2500  # 25.0%
-            - reward: { otta: 2 }
-              chance: 300    # 3.0%
-            - reward: { chroma: 1 }
-              chance: 700    # 7.0%
-            - reward: { free_turns: 1 }
-              chance: 1500   # 15.0%
-            - reward: { gold: 2000 }
-              chance: 5000   # 50.0%
+            - { reward: { points: 500 }, chance: 2500 }
+            - { reward: { otta: 2 }, chance: 300 }
+            - { reward: { chroma: 1 }, chance: 700 }
+            - { reward: { free_turns: 1 }, chance: 1500 }
+            - { reward: { gold: 2000 }, chance: 5000 }
       - { type: "FlatTile", params: { points: 200 } }
 
     gem_purchase_settings:
@@ -101,7 +117,6 @@ environment:
       reward_turns: 5
       limit: 7
 
- # --- ADDED: Breakpoint Configuration ---
     points_breakpoints:
       - 2000
       - 5000

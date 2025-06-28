@@ -11,12 +11,12 @@ stable-baselines3 = {extras = ["extra"], version = "^2.6.0"}
 board-game-env-lib = {path = "../board_game_lib", develop = true}
 pyyaml = "^6.0.2"
 pydantic = "^2.11.7"
-torch = {version = ">=2.3.0", source = "pytorch_cpu"}
+torch = {version = ">=2.3.0", source = "pytorch_cuda"}
 gradio = "^5.34.2"
 
 [[tool.poetry.source]]
-name = "pytorch_cpu"
-url = "https://download.pytorch.org/whl/cpu"
+name = "pytorch_cuda"
+url = "https://download.pytorch.org/whl/cu121"
 priority = "explicit"
 
 [build-system]
