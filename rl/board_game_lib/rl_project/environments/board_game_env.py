@@ -9,7 +9,6 @@ from typing import Optional, Dict, Any, Tuple, Type, List
 from collections import OrderedDict
 
 # --- Tile Definitions (No Changes) ---
-
 class Tile:
     def __init__(self, **kwargs):
         pass
@@ -41,9 +40,6 @@ class GrandPrizeTile(Tile):
             elif spin <= 6666: rewards["chroma"] = rewards.get("chroma", 0) + 1
             elif spin <= 7333: rewards["free_turns"] = rewards.get("free_turns", 0) + 2
             else: rewards["free_turns"] = rewards.get("free_turns", 0) + 1
-            
-            if spin > 5000:
-                rewards["points"] = rewards.get("points", 0) + self.points_reward
         return rewards
 
 class PointWheelTile(Tile):
@@ -110,7 +106,10 @@ class BoardGameEnv(gym.Env):
         self.reward_weights = reward_weights
         self.max_turns = max_turns
         self._board = self._create_board(board_layout)
-                
+        
+        self.reward_scaling_factor = self.reward_weights.get("reward_scaling_factor", 1.0)
+        self.starting_turns = self.initial_resources.get("initial_turns", 200)
+
         self.points_breakpoints = points_breakpoints or []
         self.turn_task_breakpoints = turn_task_breakpoints or []
         self.turn_task_reward = turn_task_reward or []
@@ -202,7 +201,7 @@ class BoardGameEnv(gym.Env):
         super().reset(seed=seed)
         self.master_resources = self.initial_resources.copy()
         self.position, self.turns_done = 0, 0
-        self.turns_remaining = self.master_resources.get("initial_turns", 50)
+        self.turns_remaining = self.starting_turns
         self.points_bp_met, self.turn_bp_met = -1, -1
         return self._get_observation(), self._get_info()
 
@@ -250,21 +249,29 @@ class BoardGameEnv(gym.Env):
                           for k in set(resources_before) | set(self.master_resources)}
         
         points_gained = resource_deltas.get("points", 0)
-        final_reward = points_gained * self.reward_weights.get("points", 1.0)
+        final_reward = (points_gained / self.reward_scaling_factor) * self.reward_weights.get("points", 1.0)
         
-        turn_penalty = turns_spent_this_step * self.reward_weights.get("turn_penalty", 0.0)
+        turn_penalty_value = self.reward_weights.get("turn_penalty", 0.0)
+        turn_penalty = (turns_spent_this_step * turn_penalty_value) / self.reward_scaling_factor
         final_reward -= turn_penalty
         
         free_turns_gained = resource_deltas.get("free_turns", 0)
         if free_turns_gained > 0:
-            final_reward += free_turns_gained * self.reward_weights.get("free_turns", 0.0)
+            free_turns_reward_value = self.reward_weights.get("free_turns", 0.0)
+            final_reward += (free_turns_gained * free_turns_reward_value) / self.reward_scaling_factor
 
         terminated = self.master_resources.get("points", 0) >= self.goal_points
         truncated = (self.turns_remaining <= 0) or (self.turns_done >= self.max_turns)
         
         if terminated:
             truncated = False
-        
+
+        # --- MODIFIED: Apply penalty if the episode was truncated without winning ---
+        if truncated and not terminated:
+            goal_miss_penalty_value = self.reward_weights.get("goal_miss_penalty", 0.0)
+            final_reward -= (goal_miss_penalty_value / self.reward_scaling_factor)
+        # --- END MODIFICATION ---
+
         return self._get_observation(), final_reward, terminated, truncated, self._get_info()
         
     def _get_observation(self) -> Dict[str, np.ndarray]:
@@ -275,11 +282,11 @@ class BoardGameEnv(gym.Env):
         return OrderedDict([("obs", obs), ("action_mask", mask)])
 
     def _get_info(self) -> Dict:
-        """Gets the info dictionary, including the action mask."""
+        """Gets the info dictionary, including the new net_turns_spent metric."""
         info = self.master_resources.copy()
         info["action_mask"] = self._get_action_mask()
         info["turns_remaining"] = self.turns_remaining
-        # --- CORRECTED: Assign self.turns_done to info["turns_done"] ---
         info["turns_done"] = self.turns_done
+        info["net_turns_spent"] = self.starting_turns - self.turns_remaining
         return info
 

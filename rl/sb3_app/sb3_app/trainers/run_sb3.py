@@ -1,5 +1,3 @@
-# run.py
-
 import argparse
 import yaml
 import importlib
@@ -47,7 +45,14 @@ def main():
     logger = ConsoleLogger()
     logger.log(f"Project: {config.project_name}")
     logger.log(f"Using backend: {config.runner.backend}")
-    logger.log(f"Verifying device from config: '{config.runner.hyperparams.get('params', {}).get('device', 'Not Found')}'")
+    
+    # Safely get device info for logging
+    device_info = "N/A"
+    if hasattr(config.runner, 'hyperparams') and isinstance(config.runner.hyperparams, dict):
+        params = config.runner.hyperparams.get('params', {})
+        if isinstance(params, dict):
+            device_info = params.get('device', 'cpu')
+    logger.log(f"Verifying device from config: '{device_info}'")
 
     env_factory_class = dynamic_import(config.environment.factory_class)
     env_factory: IEnvironmentFactory = env_factory_class()
@@ -55,38 +60,32 @@ def main():
     # --- MODIFIED: Corrected runner instantiation logic ---
     if config.runner.backend == 'sb3':
         runner_class = dynamic_import("sb3_app.trainers.sb3_runner.StableBaselines3_Runner")
-        # Note: The tensorboard_log_path is specific to our SB3 runner for now
+        # CORRECTED: Instantiate WITHOUT the extra tensorboard_log_path argument.
+        # The runner now correctly creates this path internally from the config object.
         runner: IRunner = runner_class(
             config, 
             logger, 
-            env_factory, 
-            tensorboard_log_path=f"results/{config.project_name}_{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+            env_factory
         )
     elif config.runner.backend == 'rllib':
+        # This part remains as a placeholder for potential future implementation
         runner_class = dynamic_import("rl_project.trainers.rllib_runner.RLlib_Runner")
         runner: IRunner = runner_class(config, logger, env_factory)
     else:
         raise ValueError(f"Unsupported backend: {config.runner.backend}")
 
 
-    # 4. --- Directory Setup ---
-    # Moved directory creation into the SB3 runner logic since RLlib handles it internally
-    logger.log(f"Results will be saved in the 'results' directory.")
-
-    # 5. --- Execution ---
+    # 4. --- Execution ---
     try:
         logger.log("Starting training...")
         runner.train()
         logger.log("Training complete.")
-
-        # Save logic can be handled inside the runner or called here
-        # For now, let's assume the runner handles its own saving path internally
-        # runner.save(str(model_save_path)) 
-        # logger.log("Model saved successfully.")
 
     except Exception as e:
         logger.log(f"An error occurred during the run: {e}")
         raise
 
 if __name__ == "__main__":
+    # This guard is crucial for multiprocessing to work correctly with SubprocVecEnv
     main()
+

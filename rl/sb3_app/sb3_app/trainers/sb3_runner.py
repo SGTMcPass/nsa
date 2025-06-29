@@ -9,13 +9,13 @@ from stable_baselines3 import PPO, A2C, SAC, TD3
 from stable_baselines3.common.vec_env import SubprocVecEnv
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.callbacks import CallbackList
-# --- REMOVED the direct import of MultiInputPolicy ---
 
 # --- Import all necessary callbacks ---
 from rl_project.utils.callback import RenderCallback, AnnealingCallback, CustomMetricsCallback
 
 from rl_project.interfaces.irunner import IRunner
-from rl.rl_project.interfaces.ienvironment_factory import IEnvironmentFactory
+# --- CORRECTED IMPORT PATH ---
+from rl_project.interfaces.ienvironment_factory import IEnvironmentFactory
 from rl_project.interfaces.ilogger import ILogger
 from rl_project.config import Config
 
@@ -95,9 +95,8 @@ class StableBaselines3_Runner(IRunner):
                 self.logger.log(f"Applying linear learning rate annealing from {initial_lr} to 0.")
                 model_kwargs["learning_rate"] = linear_schedule(initial_lr)
         
-        # --- CORRECTED: Pass the policy as a string from the config ---
         return algo_class(
-            policy=self.config.runner.policy, # <-- This will use the "MultiInputPolicy" string
+            policy=self.config.runner.policy,
             env=self.env,
             verbose=1 if self.config.runner.show_metrics_table else 0,
             tensorboard_log=self.tensorboard_log_path,

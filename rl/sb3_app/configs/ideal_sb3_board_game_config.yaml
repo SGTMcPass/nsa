@@ -1,4 +1,4 @@
-project_name: "BoardGame_SB3_Base"
+project_name: "BoardGame_SB3_Ideal"
 
 runner:
   num_envs: 6           # Matches your 6 physical CPU cores for optimal data collection.
@@ -46,10 +46,10 @@ environment:
   factory_class: "rl_project.environments.board_game_factory.BoardGameFactory"
   params:
     render_mode: "None" # Set to "human" to watch the agent play.
-    goal_points: 110000
+    goal_points: 150000
     
     initial_resources:
-      initial_turns: 200
+      initial_turns: 100000
       points: 0
       gems: 0
       gold: 0
