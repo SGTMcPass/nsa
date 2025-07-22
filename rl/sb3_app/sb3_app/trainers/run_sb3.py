@@ -4,6 +4,7 @@ import importlib
 from pathlib import Path
 from datetime import datetime
 from typing import Any
+from stable_baselines3.common.vec_env import VecNormalize
 
 from rl_project.config import Config
 from rl_project.utils.logger import ConsoleLogger

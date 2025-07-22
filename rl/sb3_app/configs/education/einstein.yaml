@@ -1,0 +1,194 @@
+project_name: "Stark-RL-Baseline-einstein"
+
+runner:
+  num_envs: 6           # Matches your 6 physical CPU cores for optimal data collection.
+  backend: "sb3"
+  policy: "MultiInputPolicy" # This is ignored by the runner, which now uses the imported class.
+  total_timesteps: 1000000
+  show_progress_bar: true
+  show_metrics_table: false
+  tensorboard_log: "./logs/sb3_tensorboard/" # Base directory for logs.
+  # --- Feature Flags ---
+  anneal_lr: false
+  anneal_entropy: false
+  # To use pre-training, provide the path to a saved model.zip file.
+  # pretrained_model_path: "./logs/sb3_tensorboard/Ideal_Env_Run_1/final_model.zip"
+  pretrained_model_path:
+
+  # --- CORRECTED INDENTATION: hyperparams is now inside runner ---
+  hyperparams:
+    algorithm: "PPO"
+    policy_kwargs:
+      # --- Correctly structured network architecture ---
+      # This will now create a large network, increasing GPU memory and utilization.
+      net_arch:
+        pi:
+        - 2048
+        - 2048
+        - 1024
+        - 512
+        vf:
+        - 2048
+        - 2048
+        - 1024
+        - 512
+    params:
+      device: "cuda"
+      # --- Aggressive parameters to keep the GPU busy ---
+      n_steps: 2048
+      batch_size: 64
+      n_epochs: 10
+
+      # --- Standard PPO parameters ---
+      gamma: 0.99
+      gae_lambda: 0.95
+      ent_coef: 0.01      # This is the initial value for annealing.
+      vf_coef: 0.5
+      learning_rate: 0.0003 # This is the initial value for annealing.
+
+# --- Environment specific configuration from your file ---
+environment:
+  factory_class: "rl_project.environments.board_game_factory.BoardGameFactory"
+  params:
+    render_mode: "None" # Set to "human" to watch the agent play.
+    goal_points: 100000
+
+    initial_resources:
+      initial_turns: 10000
+      points: 0
+      gems: 0
+      gold: 0
+      chroma: 0
+      obsidian: 0
+      otta: 0
+      gem_purchases_done: 0
+      free_turns: 0
+
+    observed_resources:
+    - "points"
+    - "gems"
+    - "gold"
+    - "chroma"
+    - "obsidian"
+    - "otta"
+    - "gem_purchases_done"
+
+    reward_weights:
+      points: 1.0
+      reward_scaling_factor: 1000.0
+      goal_miss_penalty: 10000.0
+      turn_penalty: 200.0
+      free_turns: 0.0
+      gems: 0.0
+      gold: 0.0
+      chroma: 0.0
+      obsidian: 0.0
+      otta: 0.0
+      gem_purchases_done: 0.0
+
+    board_layout:
+    - {type: "FlatTile", params: {points: 400}}
+    - {type: "FlatTile", params: {gems: 50}}
+    - {type: "FlatTile", params: {points: 50}}
+    - {type: "FlatTile", params: {points: 400}}
+    - {type: "FlatTile", params: {points: 800}}
+    - {type: "FlatTile", params: {points: 50}}
+    - {type: "FlatTile", params: {turns: 2}}
+    - {type: "FlatTile", params: {gems: 50}}
+    - {type: "GrandPrizeTile"}
+    - {type: "FlatTile", params: {gold: 1000}}
+    - {type: "PointWheelTile"}
+    - {type: "FlatTile", params: {points: 50}}
+    - {type: "FlatTile", params: {points: 200}}
+    - {type: "FlatTile", params: {gold: 1000}}
+    - {type: "FlatTile", params: {turns: 2}}
+    - {type: "FlatTile", params: {points: 200}}
+    - {type: "FlatTile", params: {points: 800}}
+    - {type: "FlatTile", params: {gold: 1000}}
+    - {type: "FlatTile", params: {points: 50}}
+    - {type: "FlatTile", params: {points: 200}}
+    - {type: "PointWheelTile"}
+    - {type: "FlatTile", params: {gold: 1000}}
+    - type: "FateWheelTile"
+      params:
+        outcomes:
+        - {reward: {points: 500}, chance: 2500}
+        - {reward: {otta: 2}, chance: 300}
+        - {reward: {chroma: 1}, chance: 700}
+        - {reward: {free_turns: 1}, chance: 1500}
+        - {reward: {gold: 2000}, chance: 5000}
+    - {type: "FlatTile", params: {points: 200}}
+
+    gem_purchase_settings:
+      cost: 750
+      reward_turns: 5
+      limit: 7
+
+    points_breakpoints:
+    - 2000
+    - 5000
+    - 8000
+    - 12000
+    - 16000
+    - 20000
+    - 22000
+    - 25000
+    - 28000
+    - 32000
+    - 36000
+    - 40000
+    - 42000
+    - 45000
+    - 48000
+    - 52000
+    - 56000
+    - 60000
+    - 62000
+    - 65000
+    - 68000
+    - 72000
+    - 76000
+    - 80000
+    - 82000
+    - 85000
+    - 88000
+    - 92000
+    - 96000
+    - 100000
+    turn_task_breakpoints:
+    - 5
+    - 10
+    - 20
+    - 30
+    - 40
+    - 60
+    - 80
+    - 100
+    - 150
+    - 200
+    - 250
+    - 300
+    - 350
+    - 400
+    - 450
+    - 500
+    - 600
+    turn_task_reward:
+    - 1
+    - 2
+    - 2
+    - 2
+    - 2
+    - 3
+    - 3
+    - 5
+    - 5
+    - 5
+    - 5
+    - 5
+    - 5
+    - 5
+    - 5
+    - 5
+    - 5
+

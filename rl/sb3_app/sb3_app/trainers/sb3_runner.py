@@ -6,7 +6,7 @@ from functools import partial
 
 from stable_baselines3.common.base_class import BaseAlgorithm
 from stable_baselines3 import PPO, A2C, SAC, TD3
-from stable_baselines3.common.vec_env import SubprocVecEnv
+from stable_baselines3.common.vec_env import SubprocVecEnv, VecNormalize
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.callbacks import CallbackList
 
@@ -43,6 +43,16 @@ class StableBaselines3_Runner(IRunner):
         else:
             self.logger.log("Creating a single environment.")
             self.env = env_creator()
+
+        self.logger.log("Wrapping environment with VecNormalize.")
+        self.env = VecNormalize(
+            self.env,
+            norm_obs=True,
+            norm_reward=True,
+            clip_obs=10.0,
+            clip_reward=10.0,
+            training=True
+        )
         
         self.logger.log("StableBaselines3_Runner initialized.")
         
@@ -95,6 +105,8 @@ class StableBaselines3_Runner(IRunner):
                 self.logger.log(f"Applying linear learning rate annealing from {initial_lr} to 0.")
                 model_kwargs["learning_rate"] = linear_schedule(initial_lr)
         
+        obs_space = self.env.observation_space
+        self.logger.log(f"Observation space: {obs_space}")
         return algo_class(
             policy=self.config.runner.policy,
             env=self.env,
@@ -154,6 +166,11 @@ class StableBaselines3_Runner(IRunner):
 
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
         self.model.save(file_path)
+        if isinstance(self.env, VecNormalize):
+            stats_path = os.path.splitext(file_path)[0] + "_vecnormalize.pkl"
+            self.env.save(stats_path)
+            self.logger.log(f"VecNormalize stats saved to {stats_path}")
+
         self.logger.log(f"Model saved to {file_path}")
 
     def load(self, file_path: str) -> None:
@@ -163,6 +180,16 @@ class StableBaselines3_Runner(IRunner):
             raise ValueError(f"Cannot load model: Algorithm '{algo_name}' not supported.")
 
         algo_class = self._algorithm_map[algo_name]
+
+        stats_path = os.path.splitext(file_path)[0] + "_vecnormalize.pkl"
+        if os.path.exists(stats_path):
+            try:
+                self.env = VecNormalize.load(stats_path, self.env)
+                self.logger.log(f"VecNormalize stats loaded from {stats_path}")
+            except Exception as e:
+                self.logger.log(f"Failed to load VecNormalize stats: {e}")
+        else:
+            self.logger.log("No VecNormalize stats file found.")
         
         try:
             if self.config.runner.pretrained_model_path:

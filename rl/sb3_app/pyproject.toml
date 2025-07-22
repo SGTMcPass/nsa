@@ -13,6 +13,9 @@ pyyaml = "^6.0.2"
 pydantic = "^2.11.7"
 torch = {version = ">=2.3.0", source = "pytorch_cuda"}
 gradio = "^5.34.2"
+ruamel-yaml = "^0.18.14"
+tensorflow = "2.15.0"  # ✅ Add this line
+
 
 [[tool.poetry.source]]
 name = "pytorch_cuda"

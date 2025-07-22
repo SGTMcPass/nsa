@@ -128,8 +128,7 @@ class BoardGameEnv(gym.Env):
         self._test_mode = test_mode
         
         num_observed_resources = len(self.observed_keys)
-        observation_size = 3 + num_observed_resources
-        
+        observation_size = len(self._multipliers) + 3 + num_observed_resources 
         self.observation_space = gym.spaces.Dict({
             "obs": gym.spaces.Box(
                 low=np.zeros(observation_size, dtype=np.float32),
@@ -205,6 +204,22 @@ class BoardGameEnv(gym.Env):
         self.points_bp_met, self.turn_bp_met = -1, -1
         return self._get_observation(), self._get_info()
 
+    def _expected_tile_value(self, pos: int, multiplier: int) -> float:
+        probabilities = {
+            2: 1/36, 3: 2/36, 4: 3/36, 5: 4/36,
+            6: 5/36, 7: 6/36, 8: 5/36, 9: 4/36,
+            10: 3/36, 11: 2/36, 12: 1/36
+        }
+        expected = 0.0
+        for roll, prob in probabilities.items():
+            tile_index = (pos + roll) % len(self._board)
+            tile = self._board[tile_index]
+            reward_dict = tile.get_reward(multiplier=multiplier)
+            tile_value = reward_dict.get("points", 0.0) / self.reward_scaling_factor
+            expected += prob * tile_value
+        return expected
+
+
     def step(self, action: int) -> Tuple[np.ndarray, float, bool, bool, Dict]:
         if self._get_action_mask()[action] == 0:
             penalty = -1.0
@@ -249,16 +264,16 @@ class BoardGameEnv(gym.Env):
                           for k in set(resources_before) | set(self.master_resources)}
         
         points_gained = resource_deltas.get("points", 0)
-        final_reward = (points_gained / self.reward_scaling_factor) * self.reward_weights.get("points", 1.0)
+        final_reward = (points_gained) * self.reward_weights.get("points", 1.0)
         
         turn_penalty_value = self.reward_weights.get("turn_penalty", 0.0)
-        turn_penalty = (turns_spent_this_step * turn_penalty_value) / self.reward_scaling_factor
+        turn_penalty = (turns_spent_this_step * turn_penalty_value) 
         final_reward -= turn_penalty
         
         free_turns_gained = resource_deltas.get("free_turns", 0)
         if free_turns_gained > 0:
             free_turns_reward_value = self.reward_weights.get("free_turns", 0.0)
-            final_reward += (free_turns_gained * free_turns_reward_value) / self.reward_scaling_factor
+            final_reward += (free_turns_gained * free_turns_reward_value) 
 
         terminated = self.master_resources.get("points", 0) >= self.goal_points
         truncated = (self.turns_remaining <= 0) or (self.turns_done >= self.max_turns)
@@ -269,13 +284,15 @@ class BoardGameEnv(gym.Env):
         # --- MODIFIED: Apply penalty if the episode was truncated without winning ---
         if truncated and not terminated:
             goal_miss_penalty_value = self.reward_weights.get("goal_miss_penalty", 0.0)
-            final_reward -= (goal_miss_penalty_value / self.reward_scaling_factor)
+            final_reward -= goal_miss_penalty_value
         # --- END MODIFICATION ---
+        final_reward /= self.reward_scaling_factor
 
         return self._get_observation(), final_reward, terminated, truncated, self._get_info()
         
     def _get_observation(self) -> Dict[str, np.ndarray]:
-        obs_values = [self.position, self.turns_remaining, self.turns_done]
+        expected_values = [self._expected_tile_value(self.position, m) for m in self._multipliers]
+        obs_values = expected_values + [self.position, self.turns_remaining, self.turns_done]
         obs_values.extend(self.master_resources.get(key, 0) for key in self.observed_keys)
         obs = np.array(obs_values, dtype=np.float32)
         mask = self._get_action_mask()
